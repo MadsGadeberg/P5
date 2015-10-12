@@ -25,8 +25,9 @@ void loop () {
     rf12_recvDone();
 
     if (rf12_canSend()) {
-       
         sprintf(payload, "%d", inc++);
         rf12_sendStart(0, payload, arr);
+        Serial.println(inc);
+        delay(100);
     }
 }
