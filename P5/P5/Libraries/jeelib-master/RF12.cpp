@@ -122,13 +122,10 @@ void rf12_spiInit () {
     pinMode(SPI_MOSI, OUTPUT);
     pinMode(SPI_MISO, INPUT);
     pinMode(SPI_SCK, OUTPUT);
-#ifdef SPCR
+
     SPCR = _BV(SPE) | _BV(MSTR);
 	SPSR |= _BV(SPI2X);
-#else
-    // ATtiny
-    USICR = bit(USIWM0);
-#endif
+
     pinMode(RFM_IRQ, INPUT);
     digitalWrite(RFM_IRQ, 1); // pull-up
 }
@@ -454,7 +451,7 @@ uint8_t rf12_initialize (uint8_t id, uint8_t band, uint8_t g, uint16_t f) {
 
     rf12_xfer(0x80C7 | (band << 4)); // EL (ena TX), EF (ena RX FIFO), 12.0pF
     rf12_xfer(0xA000 + frequency); // 96-3960 freq range of values within band
-    rf12_xfer(0xC606); // approx 49.2 Kbps, i.e. 10000/29/(1+6) Kbps
+    rf12_xfer(0xC606); rf12_xfer approx 49.2 Kbps, i.e. 10000/29/(1+6) Kbps
     rf12_xfer(0x94A2); // VDI,FAST,134kHz,0dBm,-91dBm
     rf12_xfer(0xC2AC); // AL,!ml,DIG,DQD4
     if (group != 0) {
@@ -725,4 +722,3 @@ char rf12_easySend (const void* data, uint8_t size) {
 void rf12_setRawRecvMode(uint8_t fixed_pkt_len) {
     rf12_fixed_pkt_len = fixed_pkt_len > RF_MAX ? RF_MAX : fixed_pkt_len;
 }
-
