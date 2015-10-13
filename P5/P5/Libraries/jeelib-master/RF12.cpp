@@ -134,13 +134,7 @@ void rf12_spiInit () {
 }
 
 static uint8_t rf12_byte (uint8_t out) {
-#ifdef SPDR
-    SPDR = out;
-    // this loop spins 4 usec with a 2 MHz SPI clock
-    while (!(SPSR & _BV(SPIF)))
-        ;
-    return SPDR;
-#else
+
     // ATtiny
     USIDR = out;
     byte v1 = bit(USIWM0) | bit(USITC);
@@ -162,7 +156,7 @@ static uint8_t rf12_byte (uint8_t out) {
     }
 #endif
     return USIDR;
-#endif
+
 }
 
 static uint16_t rf12_xfer (uint16_t cmd) { 
