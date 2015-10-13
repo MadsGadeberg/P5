@@ -139,7 +139,7 @@ static uint8_t rf12_byte (uint8_t out) {
     USIDR = out;
     byte v1 = bit(USIWM0) | bit(USITC);
     byte v2 = bit(USIWM0) | bit(USITC) | bit(USICLK);
-#if F_CPU <= 5000000
+
     // only unroll if resulting clock stays under 2.5 MHz
     USICR = v1; USICR = v2;
     USICR = v1; USICR = v2;
@@ -149,12 +149,7 @@ static uint8_t rf12_byte (uint8_t out) {
     USICR = v1; USICR = v2;
     USICR = v1; USICR = v2;
     USICR = v1; USICR = v2;
-#else
-    for (uint8_t i = 0; i < 8; ++i) {
-        USICR = v1;
-        USICR = v2;
-    }
-#endif
+
     return USIDR;
 
 }
@@ -182,36 +177,10 @@ static uint16_t rf12_xfer (uint16_t cmd) {
 /// "0x0000" status poll command.
 /// @param cmd RF12 command, topmost bits determines which register is affected.
 uint16_t rf12_control(uint16_t cmd) {
-#ifdef EIMSK
-#if PINCHG_IRQ
-    #if RFM_IRQ < 8
-        bitClear(PCICR, PCIE0);
-    #elif RFM_IRQ < 16
-        bitClear(PCICR, PCIE1);
-    #else
-        bitClear(PCICR, PCIE2);
-    #endif
-#else
-    bitClear(EIMSK, INT0);
-#endif
-   uint16_t r = rf12_xfer(cmd);
-#if PINCHG_IRQ
-    #if RFM_IRQ < 8
-        bitSet(PCICR, PCIE0);
-    #elif RFM_IRQ < 16
-        bitSet(PCICR, PCIE1);
-    #else
-        bitSet(PCICR, PCIE2);
-    #endif
-#else
-    bitSet(EIMSK, INT0);
-#endif
-#else
-    // ATtiny
     bitClear(GIMSK, INT0);
     uint16_t r = rf12_xfer(cmd);
     bitSet(GIMSK, INT0);
-#endif
+
     return r;
 }
 
@@ -503,38 +472,11 @@ uint8_t rf12_initialize (uint8_t id, uint8_t band, uint8_t g, uint16_t f) {
     rf12_xfer(0xC049); // 1.66MHz,3.1V
 
     rxstate = TXIDLE;
-#if PINCHG_IRQ
-    #if RFM_IRQ < 8
-        if ((nodeid & NODE_ID) != 0) {
-            bitClear(DDRB, RFM_IRQ);      // input
-            bitSet(PORTB, RFM_IRQ);       // pull-up
-            bitSet(PCMSK0, RFM_IRQ);      // pin-change
-            bitSet(PCICR, PCIE0);         // enable
-        } else
-            bitClear(PCMSK0, RFM_IRQ);
-    #elif RFM_IRQ < 15
-        if ((nodeid & NODE_ID) != 0) {
-            bitClear(DDRC, RFM_IRQ - 8);  // input
-            bitSet(PORTC, RFM_IRQ - 8);   // pull-up
-            bitSet(PCMSK1, RFM_IRQ - 8);  // pin-change
-            bitSet(PCICR, PCIE1);         // enable
-        } else
-            bitClear(PCMSK1, RFM_IRQ - 8);
-    #else
-        if ((nodeid & NODE_ID) != 0) {
-            bitClear(DDRD, RFM_IRQ - 16); // input
-            bitSet(PORTD, RFM_IRQ - 16);  // pull-up
-            bitSet(PCMSK2, RFM_IRQ - 16); // pin-change
-            bitSet(PCICR, PCIE2);         // enable
-        } else
-            bitClear(PCMSK2, RFM_IRQ - 16);
-    #endif
-#else
+
     if ((nodeid & NODE_ID) != 0)
         attachInterrupt(0, rf12_interrupt, LOW);
     else
         detachInterrupt(0);
-#endif
 
     return nodeid;
 }
@@ -625,7 +567,6 @@ void rf12_configDump () {
     }
     Serial.println();
 }
-
 
 
 /// @details
