@@ -1,50 +1,34 @@
-/// @dir pingPong
-/// Demo of a sketch which sends and receives packets.
-// 2010-05-17 <jc@wippler.nl> http://opensource.org/licenses/mit-license.php
+#include <VirtualWire.h>
 
-// with thanks to Peter G for creating a test sketch and pointing out the issue
-// see http://jeelabs.org/2010/05/20/a-subtle-rf12-detail/
+const int led_pin = 13;
+const int transmit_pin = 4;
 
-#include <JeeLib.h>
-int lastPackage = -1;
-int noPackages = 0;
-int lostPackages = 0;
-bool isStart = true; 
 
-MilliTimer secTimer;
+void setup()
+{
+	// Initialise the IO and ISR
+	vw_set_tx_pin(transmit_pin);
 
-void setup() {
+	vw_setup(8000);	 // Bits per sec
+
+	pinMode(13, OUTPUT);
+
 	Serial.begin(57600);
-	Serial.println(57600);
-	Serial.println("Receive only");
-	rf12_initialize(2, RF12_433MHZ, 33);
+	Serial.println("Starting...");
 }
 
-void loop() {
-	if (rf12_recvDone() && rf12_crc == 0) {
-		int input = atoi((char*)rf12_data);
-		if (input == lastPackage + 1 || isStart) {
-			lastPackage++;
-			noPackages++;
-			isStart = false;
-		}
-		else {
-			lostPackages = lostPackages + (input - lastPackage - 1);
-			lastPackage = input;
-		}
-	}
+int count = 1;
 
-	if (secTimer.poll(1000)) {
-		Serial.print("Packages sent: ");
-		Serial.print(noPackages);
-		Serial.println("");
-		Serial.print("Packages lost: ");
-		Serial.print(lostPackages);
-		Serial.println("");
-		Serial.println("");
+void loop()
+{
+	char msg[7] = { 'h','e','l','l','o',' ','#' };
 
-		noPackages = 0;
-		lostPackages = 0;
-	}
-
+	msg[6] = count;
+	digitalWrite(led_pin, HIGH); // Flash a light to show transmitting
+	vw_send((uint8_t *)msg, 7);
+	Serial.println(count);
+	vw_wait_tx(); // Wait until the whole message is gone
+	digitalWrite(led_pin, LOW);
+	count = count + 1;
+	delay(500);
 }
