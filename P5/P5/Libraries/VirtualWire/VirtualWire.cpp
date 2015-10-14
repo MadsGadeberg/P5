@@ -16,7 +16,6 @@
 // Copyright (C) 2008 Mike McCauley
 // $Id: VirtualWire.cpp,v 1.9 2013/02/14 22:02:11 mikem Exp mikem $
 
-
 #if defined(ARDUINO)
  #if (ARDUINO < 100)
   #include "WProgram.h"
@@ -327,58 +326,13 @@ static uint8_t _timer_calc(uint16_t speed, uint16_t max_ticks, uint16_t *nticks)
 
 
 // Speed is in bits per sec RF rate
-#if defined(__MSP430G2452__) || defined(__MSP430G2553__) // LaunchPad specific
-void vw_setup(uint16_t speed)
-{
-	// Calculate the counter overflow count based on the required bit speed
-	// and CPU clock rate
-	uint16_t ocr1a = (F_CPU / 8UL) / speed;
-		
-	// This code is for Energia/MSP430
-	TA0CCR0 = ocr1a;				// Ticks for 62,5 us
-	TA0CTL = TASSEL_2 + MC_1;       // SMCLK, up mode
-	TA0CCTL0 |= CCIE;               // CCR0 interrupt enabled
-		
-	// Set up digital IO pins
-	pinMode(vw_tx_pin, OUTPUT);
-	pinMode(vw_rx_pin, INPUT);
-	pinMode(vw_ptt_pin, OUTPUT);
-	digitalWrite(vw_ptt_pin, vw_ptt_inverted);
-}	
 
-#elif defined (ARDUINO) // Arduino specific
+
 void vw_setup(uint16_t speed)
 {
     uint16_t nticks; // number of prescaled ticks needed
     uint8_t prescaler; // Bit values for CS0[2:0]
 
-#ifdef __AVR_ATtiny85__
-    // figure out prescaler value and counter match value
-    prescaler = _timer_calc(speed, (uint8_t)-1, &nticks);
-    if (!prescaler)
-    {
-        return; // fault
-    }
-
-    TCCR0A = 0;
-    TCCR0A = _BV(WGM01); // Turn on CTC mode / Output Compare pins disconnected
-
-    // convert prescaler index to TCCRnB prescaler bits CS00, CS01, CS02
-    TCCR0B = 0;
-    TCCR0B = prescaler; // set CS00, CS01, CS02 (other bits not needed)
-
-    // Number of ticks to count before firing interrupt
-    OCR0A = uint8_t(nticks);
-
-    // Set mask to fire interrupt when OCF0A bit is set in TIFR0
-    TIMSK |= _BV(OCIE0A);
-
-#elif defined(__arm__) && defined(CORE_TEENSY)
-    // on Teensy 3.0 (32 bit ARM), use an interval timer
-    IntervalTimer *t = new IntervalTimer();
-    t->begin(TIMER1_COMPA_vect, 125000.0 / (float)(speed));
-
-#else // ARDUINO
     // This is the path for most Arduinos
     // figure out prescaler value and counter match value
     prescaler = _timer_calc(speed, (uint16_t)-1, &nticks);
@@ -386,6 +340,8 @@ void vw_setup(uint16_t speed)
     {
         return; // fault
     }
+
+	Serial.write(prescaler);
 
     TCCR1A = 0; // Output Compare pins disconnected
     TCCR1B = _BV(WGM12); // Turn on CTC mode
@@ -405,8 +361,6 @@ void vw_setup(uint16_t speed)
     TIMSK |= _BV(OCIE1A);
 #endif // TIMSK1
 
-#endif // __AVR_ATtiny85__
-
     // Set up digital IO pins
     pinMode(vw_tx_pin, OUTPUT);
     pinMode(vw_rx_pin, INPUT);
@@ -414,7 +368,6 @@ void vw_setup(uint16_t speed)
     digitalWrite(vw_ptt_pin, vw_ptt_inverted);
 }
 
-#endif // ARDUINO
 
 // Start the transmitter, call when the tx buffer is ready to go and vw_tx_len is
 // set to the total number of symbols to send
