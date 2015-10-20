@@ -1,3 +1,5 @@
+#include "P5-lib.cpp"
+
 void setup()
 {
 	pinMode(12, INPUT);
@@ -15,4 +17,5 @@ void loop()
 	}
 
 	delay(50); // Debounce button
+  int j = test();
 }

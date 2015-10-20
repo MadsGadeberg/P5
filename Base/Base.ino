@@ -1,3 +1,5 @@
+#include "P5-lib.cpp"
+
 // Arduino digital pins
 #define LED_PIN     13
 
@@ -18,6 +20,8 @@ void loop()
 	boolean light_led = false;
 
 	while (Serial.available() == 0);
+
+  int j = test();
 
 	int value = Serial.read();
 	if (value == 5)
