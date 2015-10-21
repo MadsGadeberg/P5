@@ -1,11 +1,5 @@
-#include "P5-lib.cpp"
-
 // Arduino digital pins
 #define LED_PIN     13
-
-// Button hardware is setup so the button goes LOW when pressed
-#define BUTTON_PRESSED LOW
-#define BUTTON_NOT_PRESSED HIGH
 
 void setup()
 {
@@ -21,10 +15,8 @@ void loop()
 
 	while (Serial.available() == 0);
 
-  int j = test();
-
 	int value = Serial.read();
-	if (value == 5)
+	if (value != 0 && value != 224) // Get rid of some of the spam
 	{
 		light_led = true;
 		Serial.println(value);

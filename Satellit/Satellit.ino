@@ -1,4 +1,4 @@
-#include "P5-lib.cpp"
+byte testArray[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
 
 void setup()
 {
@@ -13,9 +13,22 @@ void loop()
 
 	if (digitalRead(12))
 	{
-		Serial.write(5);
+      sendData(testArray, sizeof(testArray));
 	}
 
 	delay(50); // Debounce button
-  int j = test();
 }
+
+// Start of functions
+// Needs to be moved to library
+
+int sendData(int data)
+{
+  return Serial.write(data);
+}
+
+int sendData(byte data[], int size)
+{
+  return Serial.write(data, size);
+}
+
