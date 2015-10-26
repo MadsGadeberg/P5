@@ -1,4 +1,3 @@
-#include "RF12.h"
 #include <avr/io.h>
 #include <util/crc16.h>
 #include <avr/sleep.h>
@@ -12,7 +11,7 @@
 #define SPI_SCK     13    // PB5, pin 19
 
 // Filter
-#define FILTER		0x22
+#define FILTER		33
 
 // RF12 command codes
 #define RF_RECEIVER_ON  0x82DD
@@ -21,6 +20,9 @@
 #define RF_SLEEP_MODE   0x8205
 #define RF_TXREG_WRITE  0xB800
 #define RF_RX_FIFO_READ 0xB000
+
+// RF12 status bits
+#define RF_RSSI_BIT     0x0100
 
 void initRF() {
 	int band = 1;
@@ -72,6 +74,13 @@ void initRF() {
     attachInterrupt(0, rf_interrupt, LOW);
 }
 
+uint16_t rf12_control(uint16_t cmd) {
+    bitClear(EIMSK, INT0); // Interrupt 0 off
+   	uint16_t r = sendSPI(cmd);
+    bitSet(EIMSK, INT0); // Interrupt 0 on
+    return r;
+}
+
 // Chip select (enable SPI)
 void enableSPI() {
 	digitalWrite(SPI_SS, LOW);
@@ -116,7 +125,7 @@ void rf_interrupt () {
     if (Send) {
     	sendSPI(0x0000);
 	
-		sendSPI(RF_TXREG_WRITE + 'a');
+		sendSPI(RF_TXREG_WRITE + 0xAA);
 		
 		
 		Send = false;
@@ -132,13 +141,25 @@ void send() {
 	Send = true;
 }
 
+uint8_t rf12_canSend () {
+    // need interrupts off to avoid a race (and enable the RFM12B, thx Jorg!)
+    // see http://openenergymonitor.org/emon/node/1051?page=3
+    if ((rf12_control(0x0000) & RF_RSSI_BIT) == 0) {
+        sendSPI(RF_IDLE_MODE); // stop receiver
+        return 1;
+    }
+    return 0;
+}
+
 void setup() {
 	Serial.begin(57600);
 	initRF();
 }
 
 void loop() {
-	 Serial.println("Sending");
-  send();
-  delay(3000);
+	if (rf12_canSend()) {
+		Serial.println("Sending");
+  		send();
+  	}
+  	delay(3000);
 }
