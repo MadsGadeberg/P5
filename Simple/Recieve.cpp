@@ -42,10 +42,10 @@ void initRF() {
     // MSTR - Sets the Arduino in master mode when 1, slave mode when 0
     // SPR1 and SPR0 - Sets the SPI speed, 00 is fastest (4MHz) 11 is slowest (250KHz)
     SPCR = _BV(SPE) | _BV(MSTR); 
-    bitSet(SPCR, SPR0);
+    //bitSet(SPCR, SPR0);
     
     // use clk/2 (2x 1/4th) for sending (and clk/8 for recv, see rf12_xferSlow)
-    SPSR |= _BV(SPI2X);
+    //SPSR |= _BV(SPI2X);
     
     rf12_xfer(0x0000); // initial SPI transfer added to avoid power-up problem
     rf12_xfer(RF_SLEEP_MODE); // DC (disable clk pin), enable lbd
