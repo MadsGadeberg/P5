@@ -1,67 +1,60 @@
+#include "rfpr.h"
 #include "rfhw.h"
-
-// Define pins
-// IRQ port needs to be equal to interrupt no 0
-#define RFM_IRQ     2
-
-// SPI ports - change according to processor
-// Arduino is SPI master
-#define SPI_SS      10 // Slave select -> Can be changed to whatever port needed
-#define SPI_MOSI    11 // Master out -> Slave in
-#define SPI_MISO    12 // Master in -> Slave out
-#define SPI_SCK     13 // Clock
-
-// Configuration Setting Command (frequency = 433 MHz)
-#define RF_BAND 0x10
-
-// Frequency Setting Command (frequency correction)
-// Fc=430+F*0.0025 MHz = approx 434 MHz
-#define RF_FREQUENCY 1600
+#include <stdint.h>
 
 namespace rf {
-	// Init spi
-	void hw_initSPI() {
-		// Set pinmodes for SPI and IRQ
-		pinMode(SPI_SS, OUTPUT);
-		pinMode(SPI_MOSI, OUTPUT);
-    	pinMode(SPI_MISO, INPUT);
-    	pinMode(SPI_SCK, OUTPUT);
-    	pinMode(RFM_IRQ, INPUT);
-    	
-    	// Disable RF (SPI)
-    	hw_disableRF();
-    	
-    	// 0x51
-		// SPE - Enables the SPI when 1 (&0x40)
-    	// MSTR - Sets the Arduino in master mode when 1, slave mode when 0 (&0x10)
-    	// SPR1 and SPR0 - Sets the SPI speed, 00 is fastest (4MHz) 11 is slowest (250KHz) (means it's in between) (&0x03)
-    	// https://www.arduino.cc/en/Tutorial/SPIEEPROM
-    	SPCR = _BV(SPE) | _BV(MSTR); 
-    	bitSet(SPCR, SPR0); // Not required -> Remove for faster transfer (see above comment)
-    	
-    	// use clk/2 (2x 1/4th) for sending (and clk/8 for recv, see rf12_xferSlow)
-    	// Comment from Jeelabs RF12
-    	// SPI2x (Double SPI Speed) bit
-    	// http://avrbeginners.net/architecture/spi/spi.html#spsr
-    	SPSR |= _BV(SPI2X); // Not required -> can be removed (slower speed)
-    	
-    	// Pull IRQ pin up to prevent IRQ on start
-    	digitalWrite(RFM_IRQ, HIGH);
+	byte* getByteArrayForConnectRequest(struct connectRequest) {
+		byte bytearray[3];
+		bytearray[0] = ((uint8_t)(connectRequest.RID >> 8));
+		bytearray[1] = ((uint8_t)(connectRequest.RID));
+		bytearray[2] = ((uint8_t)(1 << 4)) | ((uint8_t)(connectRequest.checksum << 4));
+		return bytearray;
 	}
-	
-	// Identifier handled in protocol
-	void hw_init(uint8_t byte_filter) {
-		// Init SPI
-		hw_initSPI();
-		
-		
+
+	byte* getByteArrayForConnectConfirmation(struct connectedConfirmation) {
+		byte bytearray[4];
+		bytearray[0] = ((uint8_t)(connectedConfirmation.VID << 4)) | ((uint8_t)(2 << 4));
+		bytearray[1] = ((uint8_t)(connectRequest.RID >> 8));
+		bytearray[2] = ((uint8_t)(connectRequest.RID));
+		bytearray[3] = ((uint8_t)(connectRequest.Checksum));
+		return bytearray;
 	}
-	
-	inline void hw_enableRF() {
-		digitalWrite(SPI_SS, LOW);
+
+	byte* getByteArrayForPing(struct ping) {
+		byte bytearray[2];
+		bytearray[0] = ((uint8_t)(3 << 4)) | ((uint8_t)(ping.VID << 4));
+		bytearray[1] = ((uint8_t)(ping.Checksum));
+		return bytearray;
 	}
-	
-	inline void hw_disableRF() {
-		digitalWrite(SPI_SS, HIGH);
+
+	byte* getByteArrayForDatasending(struct dataSending) {
+		byte bytearray[2];
+		bytearray[0] = ((uint8_t)(4 << 4));
+		memcpy(dataSending.Data, bytearray+1, 20 * sizeof(uint16_t));
+		return bytearray;
+	}
+
+
+	pr_send(){
+
+	}
+
+	pr_receive(){
+
+	}
+
+	uint8_t crc16_update(uint8_t a)
+	{
+		uint8_t crc = 0;
+		int i;
+		crc ^= a;
+		for (i = 0; i < 8; ++i)
+		{
+			if (crc & 1)
+				crc = (crc >> 1) ^ 0xA001;
+			else
+				crc = (crc >> 1);
+		}
+		return crc;
 	}
 }
