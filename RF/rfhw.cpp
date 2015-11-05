@@ -9,10 +9,17 @@
 
 // SPI ports - change according to processor
 // Arduino is SPI master
-#define SPI_SS      	10 	// Slave select -> Can be changed to whatever port needed
-#define SPI_MOSI    	11 	// Master out -> Slave in
-#define SPI_MISO    	12 	// Master in -> Slave out
-#define SPI_SCK     	13 	// Clock
+if defined(__AVR_ATtiny84__)
+	#define SPI_SS      	9 	// Slave select -> Can be changed to whatever port needed - pin 3
+	#define SPI_MOSI    	5 	// Master out -> Slave in - Pin 7 - Reversed?
+	#define SPI_MISO    	6 	// Master in -> Slave out - Pin 8
+	#define SPI_SCK     	4 	// Clock - Pin 9
+#else
+	#define SPI_SS      	10 	// Slave select -> Can be changed to whatever port needed
+	#define SPI_MOSI    	11 	// Master out -> Slave in
+	#define SPI_MISO    	12 	// Master in -> Slave out
+	#define SPI_SCK     	13 	// Clock
+#endif
 
 // Configuration Setting Command (frequency = 433 MHz)
 #define RF_BAND 		0x10
@@ -52,7 +59,7 @@ namespace rf {
 	void hw_setStateIdle();
 	void hw_setStateTransmitter();
 	void hw_setStateSleep();
-	void hw_send(char byte);
+	bool hw_send(char byte);
 	bool hw_send(const char buffer[], uint8_t len);
 	char* hw_recieve(uint8_t* length);
 	uint16_t hw_sendCMD (uint16_t command);
@@ -75,14 +82,19 @@ namespace rf {
     	// MSTR - Sets the Arduino in master mode when 1, slave mode when 0 (&0x10)
     	// SPR1 and SPR0 - Sets the SPI speed, 00 is fastest (4MHz) 11 is slowest (250KHz) (means it's in between) (&0x03)
     	// https://www.arduino.cc/en/Tutorial/SPIEEPROM
-    	SPCR = _BV(SPE) | _BV(MSTR); 
-    	bitSet(SPCR, SPR0); // Not required -> Remove for faster transfer (see above comment)
-    	
-    	// use clk/2 (2x 1/4th) for sending (and clk/8 for recv, see rf12_xferSlow)
-    	// Comment from Jeelabs RF12
-    	// SPI2x (Double SPI Speed) bit
-    	// http://avrbeginners.net/architecture/spi/spi.html#spsr
-    	SPSR |= _BV(SPI2X); // Not required -> can be removed (slower speed)
+    	#ifdef SPCR
+    		SPCR = _BV(SPE) | _BV(MSTR); 
+    		// bitSet(SPCR, SPR0); // Not required -> Remove for faster transfer (see above comment)
+    		
+    		// use clk/2 (2x 1/4th) for sending (and clk/8 for recv, see rf12_xferSlow)
+    		// Comment from Jeelabs RF12
+    		// SPI2x (Double SPI Speed) bit
+    		// http://avrbeginners.net/architecture/spi/spi.html#spsr
+    		SPSR |= _BV(SPI2X); // Not required -> can be removed (slower speed)
+    	#else
+    		// ATTiny does not support  SPCR and SPSR
+    		USICR = bit(USIWM0);
+    	#endif
     	
     	// Pull IRQ pin up to prevent IRQ on start
     	digitalWrite(RFM_IRQ, HIGH);
@@ -236,9 +248,9 @@ namespace rf {
 	
 	}
 	
-	inline void hw_send(char byte) {
+	inline bool hw_send(char byte) {
 		char data[] = { byte };
-		hw_send(data, 1);
+		return hw_send(data, 1);
 	}
 	
 	bool hw_send(const char buffer[], uint8_t len) {
@@ -264,6 +276,10 @@ namespace rf {
 		return true;
 	}
 	
+	bool hw_canSend() {
+		return hw_state == STATE_IDLE;
+	}
+	
 	char* hw_recieve(uint8_t* length) {
 		if (hw_state == STATE_RX && hw_buffer_index >= hw_buffer_len) {
 			hw_state = STATE_IDLE;
@@ -272,6 +288,8 @@ namespace rf {
 			hw_buffer_index = 0;
 			
 			return hw_buffer;
+		} else if (hw_state == STATE_IDLE) {
+			hw_setStateRecieve();
 		}
 		
 		return NULL;
@@ -292,8 +310,22 @@ namespace rf {
 	// Sends one byte and returns one byte. Please note that RFM12 is expecting 2 bytes for each command
 	// https://www.arduino.cc/en/Tutorial/SPIEEPROM
 	char hw_sendCMDByte (char out) {
-		SPDR = out;                    // Start the transmission
-  		while (!(SPSR & (1<<SPIF)));    // Wait for the end of the transmission
-  		return SPDR;                   	// return the received byte
+		// Arduino
+		#ifdef SPDR
+			SPDR = out;                    // Start the transmission
+  			while (!(SPSR & (1<<SPIF)));    // Wait for the end of the transmission
+  			return SPDR;                   	// return the received byte
+  		#else
+  			// ATtiny
+    		USIDR = out;
+    		byte v1 = bit(USIWM0) | bit(USITC);
+    		byte v2 = bit(USIWM0) | bit(USITC) | bit(USICLK);
+    		
+    		for (uint8_t i = 0; i < 8; ++i) {
+        		USICR = v1;
+        		USICR = v2;
+    		}
+    		return USIDR;
+  		#endif
 	}
 }
