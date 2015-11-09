@@ -13,9 +13,14 @@ namespace rf {
 	};
 
 	struct dataSending {
-		uint16_t Data[20]
+		uint16_t data[20]
 	};
 
-	void pr_send();
-	void pr_receive()
+	enum packetTypes {
+		connectRequest, connectedConfirmation, ping, dataSending
+	};
+	typedef enum packetTypes packetTypes;
+
+	bool pr_send(packetTypes packetType, uint16_t RID, byte VID, uint16_t data);
+	bool pr_receive()
 }

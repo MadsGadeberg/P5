@@ -9,7 +9,7 @@
 
 // SPI ports - change according to processor
 // Arduino is SPI master
-if defined(__AVR_ATtiny84__)
+#if defined(__AVR_ATtiny84__)
 	#define SPI_SS      	9 	// Slave select -> Can be changed to whatever port needed - pin 3
 	#define SPI_MOSI    	5 	// Master out -> Slave in - Pin 7 - Reversed?
 	#define SPI_MISO    	6 	// Master in -> Slave out - Pin 8

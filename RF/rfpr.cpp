@@ -34,12 +34,25 @@ namespace rf {
 		return bytearray;
 	}
 
-
-	pr_send(){
-
+	bool pr_send(packetTypes packetType, uint16_t RID, byte VID, uint16_t data){
+		switch (packetType)
+		{
+			case connectRequest:
+				break;
+			case connectedConfirmation:
+				break;
+			case ping:
+				struct ping myPacket = { VID };
+				byte myByteArray[2];
+				myByteArray = getByteArrayForPing(myPacket);
+				hw_send(myByteArray, sizeof(myByteArray));
+				break;
+			case dataSending:
+				break;
+		}
 	}
 
-	pr_receive(){
+	bool pr_receive(){
 
 	}
 
