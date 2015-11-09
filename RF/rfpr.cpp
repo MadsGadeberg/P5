@@ -44,7 +44,8 @@ namespace rf {
 			case connectedConfirmationPacket:
 				break;
 			case pingPacket:
-				struct ping myPacket = { VID };
+				struct ping myPacket;
+				myPacket.VID = VID;
 				hw_send(getByteArrayForPing(myPacket), 5);
 				break;
 			case dataSendingPacket:
