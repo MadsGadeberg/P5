@@ -1,19 +1,19 @@
 namespace rf {
 	struct connectRequest {
-		uint16_t RID
+		uint16_t RID;
 	};
 
 	struct connectedConfirmation {
-		byte VID,
-		uint16_t RID
+		byte VID;
+		uint16_t RID;
 	};
 
 	struct ping {
-		byte VID
+		byte VID;
 	};
 
 	struct dataSending {
-		uint16_t data[20]
+		uint16_t data[20];
 	};
 
 	enum packetTypes {
