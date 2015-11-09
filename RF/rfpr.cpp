@@ -39,19 +39,19 @@ namespace rf {
 		switch (packetType)
 		{
 			case connectRequestPacket:
-				struct connectRequest myPacket;
-				myPacket.RID = RID;
-				hw_send(getByteArrayForConnectRequest(myPacket), 3);
+				struct connectRequest myConnectRequest;
+				myConnectRequest.RID = RID;
+				hw_send(getByteArrayForConnectRequest(myConnectRequest), 3);
 				break;
 			case connectedConfirmationPacket:
-				struct connectConfirmation myPacket;
-				myPacket.RID = RID; myPacket.VID = VID;
-				hw_send(getByteArrayForConnectConfirmation(myPacket), 4);
+				struct connectedConfirmation myConnectedConfirmation;
+				myConnectedConfirmation.RID = RID; myConnectedConfirmation.VID = VID;
+				hw_send(getByteArrayForConnectConfirmation(myConnectedConfirmation), 4);
 				break; 
 			case pingPacket:
-				struct ping myPacket;
-				myPacket.VID = VID;
-				hw_send(getByteArrayForPing(myPacket), 2);
+				struct ping myPing;
+				myPing.VID = VID;
+				hw_send(getByteArrayForPing(myPing), 2);
 				break;
 			case dataSendingPacket:
 				break;
