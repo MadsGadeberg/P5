@@ -8,7 +8,6 @@ namespace rf {
 		static char bytearray[3];
 		bytearray[0] = ((uint8_t)(data.RID >> 8));
 		bytearray[1] = ((uint8_t)(data.RID));
-		
 		bytearray[2] = ((uint8_t)(1 << 4)) | ((uint8_t)(data.checksum << 4));
 		return bytearray;
 	}
@@ -40,13 +39,16 @@ namespace rf {
 		switch (packetType)
 		{
 			case connectRequestPacket:
+				struct connectRequest myPacket;
+				myPacket.RID = RID;
+				hw_send(getByteArrayForConnectRequest(myPacket), 3);
 				break;
 			case connectedConfirmationPacket:
 				break;
 			case pingPacket:
 				struct ping myPacket;
 				myPacket.VID = VID;
-				hw_send(getByteArrayForPing(myPacket), 5);
+				hw_send(getByteArrayForPing(myPacket), 2);
 				break;
 			case dataSendingPacket:
 				break;
