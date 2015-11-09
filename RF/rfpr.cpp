@@ -51,10 +51,11 @@ namespace rf {
 			case dataSendingPacket:
 				break;
 		}
+		return true;
 	}
 
 	bool pr_receive(){
-
+		return true;
 	}
 
 	uint8_t crc16_update(uint8_t a)
