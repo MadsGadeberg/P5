@@ -1,53 +1,53 @@
 #include "rfpr.h"
 #include "rfhw.h"
 #include <stdint.h>
+#include <string.h>
 
 namespace rf {
-	byte* getByteArrayForConnectRequest(struct connectRequest) {
-		byte bytearray[3];
-		bytearray[0] = ((uint8_t)(connectRequest.RID >> 8));
-		bytearray[1] = ((uint8_t)(connectRequest.RID));
-		bytearray[2] = ((uint8_t)(1 << 4)) | ((uint8_t)(connectRequest.checksum << 4));
+	char* getByteArrayForConnectRequest(struct connectRequest data) {
+		static char bytearray[3];
+		bytearray[0] = ((uint8_t)(data.RID >> 8));
+		bytearray[1] = ((uint8_t)(data.RID));
+		
+		bytearray[2] = ((uint8_t)(1 << 4)) | ((uint8_t)(data.checksum << 4));
 		return bytearray;
 	}
 
-	byte* getByteArrayForConnectConfirmation(struct connectedConfirmation) {
-		byte bytearray[4];
-		bytearray[0] = ((uint8_t)(connectedConfirmation.VID << 4)) | ((uint8_t)(2 << 4));
-		bytearray[1] = ((uint8_t)(connectRequest.RID >> 8));
-		bytearray[2] = ((uint8_t)(connectRequest.RID));
-		bytearray[3] = ((uint8_t)(connectRequest.Checksum));
+	char* getByteArrayForConnectConfirmation(struct connectedConfirmation data) {
+		static char bytearray[4];
+		bytearray[0] = ((uint8_t)(data.VID << 4)) | ((uint8_t)(2 << 4));
+		bytearray[1] = ((uint8_t)(data.RID >> 8));
+		bytearray[2] = ((uint8_t)(data.RID));
+		bytearray[3] = ((uint8_t)(data.checksum));
 		return bytearray;
 	}
 
-	byte* getByteArrayForPing(struct ping) {
-		byte bytearray[2];
-		bytearray[0] = ((uint8_t)(3 << 4)) | ((uint8_t)(ping.VID << 4));
-		bytearray[1] = ((uint8_t)(ping.Checksum));
+	char* getByteArrayForPing(struct ping data) {
+		static char bytearray[2];
+		bytearray[0] = ((uint8_t)(3 << 4)) | ((uint8_t)(data.VID << 4));
+		bytearray[1] = ((uint8_t)(data.checksum));
 		return bytearray;
 	}
 
-	byte* getByteArrayForDatasending(struct dataSending) {
-		byte bytearray[2];
+	char* getByteArrayForDatasending(struct dataSending data) {
+		static char bytearray[2];
 		bytearray[0] = ((uint8_t)(4 << 4));
-		memcpy(dataSending.Data, bytearray+1, 20 * sizeof(uint16_t));
+		memcpy(data.data, bytearray+1, 20 * sizeof(uint16_t));
 		return bytearray;
 	}
 
-	bool pr_send(packetTypes packetType, uint16_t RID, byte VID, uint16_t data){
+	bool pr_send(packetTypes packetType, uint16_t RID, char VID, uint16_t data){
 		switch (packetType)
 		{
-			case connectRequest:
+			case connectRequestPacket:
 				break;
-			case connectedConfirmation:
+			case connectedConfirmationPacket:
 				break;
-			case ping:
+			case pingPacket:
 				struct ping myPacket = { VID };
-				byte myByteArray[2];
-				myByteArray = getByteArrayForPing(myPacket);
-				hw_send(myByteArray, sizeof(myByteArray));
+				hw_send(getByteArrayForPing(myPacket), 5);
 				break;
-			case dataSending:
+			case dataSendingPacket:
 				break;
 		}
 	}
