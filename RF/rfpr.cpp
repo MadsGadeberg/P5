@@ -44,6 +44,9 @@ namespace rf {
 				hw_send(getByteArrayForConnectRequest(myPacket), 3);
 				break;
 			case connectedConfirmationPacket:
+				struct connectConfirmation myPacket;
+				myPacket.RID = RID; myPacket.VID = VID;
+				hw_send(getByteArrayForConnectConfirmation(myPacket), 4);
 				break; 
 			case pingPacket:
 				struct ping myPacket;
