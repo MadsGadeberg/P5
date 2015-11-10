@@ -34,10 +34,6 @@ void loop() {
 }
 
 int getSample(){
-  // activates databuffers for AIN0 and AIN1
-  //DIDR0 &= ~(1 << 1);
-  //DIDR0 &= ~(1 << 0);
-
   // do single conversion
   ADCSRA |= ((1<<ADSC) | (1 << ADIF));  
 
@@ -45,16 +41,8 @@ int getSample(){
   // busywait until bit is smth
   while(!(ADCSRA & (1 << ADIF))){}
 
-  // Close buffer
-  //DIDR0 |= 1 << 1;
-  //DIDR0 |= 1 << 0;
-
   //Return the data
   //get the first 2 lsb from ADCH and ADCL and return them as int
-  char tmpL = ADCL; //tmp værdierne virker ikke!!
-  char tmpH = ADCH;
-  //return (ADCH & 0x03); // returnerer 0x03
-  //return ADCL; // returnerer Mange
   int value = (ADCL | ((ADCH & 0x03) << 8));
   return value;
 }
