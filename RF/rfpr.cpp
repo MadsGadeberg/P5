@@ -7,9 +7,16 @@
 namespace rf {
 	char* getByteArrayForConnectRequest(struct connectRequest data) {
 		static char bytearray[3];
-		bytearray[0] = ((uint8_t)(1 << 4)) | ((uint8_t)(data.checksum << 4));
+		bytearray[0] = ((uint8_t)(1 << 4));
 		bytearray[1] = ((uint8_t)(data.RID >> 8));
 		bytearray[2] = ((uint8_t)(data.RID));
+		
+		uint8_t crc = 0;
+		for (int i = 0; i < 3; i++) {
+			crc = crc8_update(bytearray[i], crc);
+		}
+		bytearray[0] |= ((uint8_t)(crc << 4))
+		
 		return bytearray;
 	}
 
@@ -18,21 +25,47 @@ namespace rf {
 		bytearray[0] = ((uint8_t)(2 << 4)) | ((uint8_t)(data.VID << 4));
 		bytearray[1] = ((uint8_t)(data.RID >> 8));
 		bytearray[2] = ((uint8_t)(data.RID));
-		bytearray[3] = ((uint8_t)(data.checksum));
+		
+		uint8_t crc = 0;
+		for (int i = 0; i < 3; i++) {
+			crc = crc8_update(bytearray[i], crc);
+		}
+		bytearray[3] = ((uint8_t)(crc))
+		
 		return bytearray;
 	}
 
 	char* getByteArrayForPing(struct ping data) {
 		static char bytearray[2];
 		bytearray[0] = ((uint8_t)(3 << 4)) | ((uint8_t)(data.VID << 4));
-		bytearray[1] = ((uint8_t)(data.checksum));
+		
+		uint8_t crc = 0;
+		for (int i = 0; i < 1; i++) {
+			crc = crc8_update(bytearray[i], crc);
+		}
+		bytearray[1] = ((uint8_t)(crc))
+		
 		return bytearray;
 	}
 
 	char* getByteArrayForDatasending(struct dataSending data) {
-		static char bytearray[2];
+		static char bytearray[21];
 		bytearray[0] = ((uint8_t)(4 << 4));
 		memcpy(data.data, bytearray+1, 20 * sizeof(uint16_t));
+		
+		char* array = bytearray + 1;
+		uint8_t crc = 0;
+		for (int i = 0; i < 20 * 2; i+=2) {
+			/*crc = crc8_update(array[i], 0);
+			crc = crc8_update(array[i + 1], crc);*/
+			
+			// crc erstattet af dublikeret data
+			
+			// Indsæt crc
+			// 10 bits til data
+			array[i] |= array[i] << 6 | array[i + 1] >> 2;
+		}
+		
 		return bytearray;
 	}
 	
