@@ -2,6 +2,7 @@
 
 #include <stdint.h>
 #include "rfhw.h"
+#include <Arduino.h>
 
 // Define pins
 // IRQ port needs to be equal to interrupt no 0
@@ -48,6 +49,17 @@ namespace rf {
 	char hw_buffer[MAX_LEN];
 	uint8_t hw_buffer_index = 0;
 	uint8_t hw_buffer_len = 0;
+	
+	void hw_interrupt();
+	void hw_enableRF();
+	void hw_disableRF();
+	void hw_setStateRecieve();
+	void hw_setStateIdle();
+	void hw_setStateTransmitter();
+	void hw_setStateSleep();
+	void hw_initSPI();
+	uint16_t hw_sendCMD(uint16_t command);
+	char hw_sendCMDByte(char out);
 
 	// Init spi
 	inline void hw_initSPI() {
@@ -85,7 +97,7 @@ namespace rf {
 	}
 	
 	// Identifier handled in protocol
-	inline void hw_init(uint8_t byte_filter) {
+	void hw_init(uint8_t byte_filter) {
 		// Init SPI
 		hw_initSPI();
     

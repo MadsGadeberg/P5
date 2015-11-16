@@ -18,17 +18,17 @@ namespace rf {
 		uint16_t data[20];
 	};
 	
+	struct packetdata {
+		bool valid;
+		uint16_t value;
+    };
+	
 	struct dataRecieving {
 		packetdata data[20];
 	};
 	
-	struct packetdata {
-		bool valid;
-		uint16_t value;
-	}
-
 	enum packetTypes {
-		connectRequestPacket, connectedConfirmationPacket, pingPacket, dataSendingPacket
+		CONNECT_REQUEST, CONNECTED_CONFIRMATION, PING, DATA, INVALID
 	};
 	typedef enum packetTypes packetTypes;
 
