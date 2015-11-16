@@ -35,32 +35,6 @@ namespace rf {
 		memcpy(data.data, bytearray+1, 20 * sizeof(uint16_t));
 		return bytearray;
 	}
-
-	bool pr_send(packetTypes packetType, uint16_t RID, char VID, uint16_t data){
-		switch (packetType)
-		{
-			case connectRequestPacket:
-				struct connectRequest myConnectRequest;
-				myConnectRequest.RID = RID;
-				hw_send(getByteArrayForConnectRequest(myConnectRequest), 3);
-				break;
-			case connectedConfirmationPacket:
-				struct connectedConfirmation myConnectedConfirmation;
-				myConnectedConfirmation.RID = RID; 
-				myConnectedConfirmation.VID = VID;
-				hw_send(getByteArrayForConnectConfirmation(myConnectedConfirmation), 4);
-				break; 
-			case pingPacket:
-				struct ping myPing;
-				myPing.VID = VID;
-				hw_send(getByteArrayForPing(myPing), 2);
-				break;
-			case dataSendingPacket:
-				//struct datasending mydatasending;
-				break;
-		}
-		return true;
-	}
 	
 	bool pr_send_connectRequest(uint16_t RID, char VID) {
 		struct connectRequest myConnectRequest;
@@ -81,15 +55,11 @@ namespace rf {
 		return pr_send(myPing);
 	}
 	
-	bool pr_send_dataSending(uint16_t data) {
+	bool pr_send_dataSending(uint16_t data[]) {
 		struct dataSending mydataSending;
 		mydataSending.data = data;
 		return pr_send(mydataSending);
 	}
-	
-	
-	
-	
 	
 	bool pr_send(struct connectRequest input) {
 		return hw_send(getByteArrayForConnectRequest(input), 3);
@@ -129,16 +99,17 @@ namespace rf {
 			*output = myPing;
 			return myPing;
 		}else if(data[0] >> 4 == 4){
-			
-			
+			struct dataSending mydataSending;
+			mydataSending.data = (uint16_t*) (data + 1);
+			return mydataSending;
 		}
 		
 		return 0;
 	}
-
-	uint8_t crc16_update(uint8_t a)
+	
+	uint8_t crc8_update(uint8_t input, uint8_t lastCrc)
 	{
-		uint8_t crc = 0;
+		uint8_t crc = lastCrc;
 		int i;
 		crc ^= a;
 		for (i = 0; i < 8; ++i)
