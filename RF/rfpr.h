@@ -17,6 +17,15 @@ namespace rf {
 	struct dataSending {
 		uint16_t data[20];
 	};
+	
+	struct dataRecieving {
+		packetdata data[20];
+	};
+	
+	struct packetdata {
+		bool valid;
+		uint16_t value;
+	}
 
 	enum packetTypes {
 		connectRequestPacket, connectedConfirmationPacket, pingPacket, dataSendingPacket

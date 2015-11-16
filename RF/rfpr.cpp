@@ -118,22 +118,58 @@ namespace rf {
 			struct connectRequest myConnectRequest;
 			myConnectRequest.RID = data[1] << 8 | data[2];
 			*ouput = myConnectRequest;
-			return connectRequestPacket;
+			
+			
+			
+			uint8_t crc = 0;
+			for (int i = 0; i < 3; i++) {
+				byte d = data[i];
+				if (i == 0)
+					d = d & 0xf;
+				
+				crc = crc8_update(d, crc);
+			}
+			
+			if (crc << 4 == data[0] &0xf0){
+				return connectRequestPacket;
+			}
 			
 		}else if(data[0] >> 4 == 2){
 			struct connectedConfirmation myConnectedConfirmation;
 			myConnectedConfirmation.VID = data[1] >> 8; 
 			myConnectedConfirmation.RID = data[2] << 8 | data[3]; 
 			*output = myConnectedConfirmation;
-			return myConnectedConfirmation;
+			
+			uint8_t crc = 0;
+			for (int i = 0; i < 3; i++) {
+				crc = crc8_update(data[i], crc);
+			}
+			
+			if(crc == data[3]){
+				return myConnectedConfirmation;
+			}
 		}else if(data[0] >> 4 == 3){
 			struct ping myPing;
 			myPing.VID = data[0] >> 8; 
 			*output = myPing;
-			return myPing;
+			
+			uint8_t crc = 0;
+			crc = crc8_update(data[0], crc);
+			
+			if(crc == data[1]){
+				return myPing;
+			}
 		}else if(data[0] >> 4 == 4){
-			struct dataSending mydataSending;
-			mydataSending.data = (uint16_t*) (data + 1);
+			char* array = bytearray + 1;
+		
+			struct dataRecieving dataRecieving;
+			
+			char* array = data + 1;
+			for (int i = 0; i < 20; i++) {
+				dataRecieving.data[i].value = array[i * 2] & 0x3 | array[i * 2 + 1];
+				dataRecieving.data[i].valid = (((array[i * 2] & 0x3) << 6) | array[i * 2 + 1] >> 2) == array[i*2] & 0xfc;
+			}
+			
 			return mydataSending;
 		}
 		
