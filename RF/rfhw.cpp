@@ -5,17 +5,18 @@
 #include <Arduino.h>
 
 // Define pins
-// IRQ port needs to be equal to interrupt no 0
-#define RFM_IRQ     	2
-
 // SPI ports - change according to processor
 // Arduino is SPI master
 #if defined(__AVR_ATtiny84__)
+	#define RFM_IRQ     	8	// IRQ port needs to be equal to interrupt no 0
+
 	#define SPI_SS      	9 	// Slave select -> Can be changed to whatever port needed - pin 3
 	#define SPI_MOSI    	5 	// Master out -> Slave in - Pin 7 - Reversed?
 	#define SPI_MISO    	6 	// Master in -> Slave out - Pin 8
 	#define SPI_SCK     	4 	// Clock - Pin 9
 #else
+	#define RFM_IRQ     	2	// IRQ port needs to be equal to interrupt no 0
+
 	#define SPI_SS      	10 	// Slave select -> Can be changed to whatever port needed
 	#define SPI_MOSI    	11 	// Master out -> Slave in
 	#define SPI_MISO    	12 	// Master in -> Slave out
@@ -31,22 +32,27 @@
 
 // MAX_LEN for packet
 // uint8_t used for states
-#define MAX_LEN 		0xfa
+#define MAX_LEN 		0xf7
 
 // States
+#define STATE_TX_PRE0	0xfa
+#define STATE_TX_PRE1	0xfb
+#define STATE_TX_PRE2	0xfc
 #define STATE_TX_BYTE0	0xfd
 #define STATE_TX_FILTER	0xfe
+
+
 #define STATE_TX_LEN	0xff
 
-#define STATE_IDLE 		0xfb
-#define STATE_RX 		0xfc
+#define STATE_IDLE 		0xf8
+#define STATE_RX 		0xf9
 
 // Filter
 #define FILTER    20
 
 namespace rf {
 	uint8_t hw_state = STATE_IDLE;
-	char hw_buffer[MAX_LEN];
+	uint8_t hw_buffer[MAX_LEN];
 	uint8_t hw_buffer_index = 0;
 	uint8_t hw_buffer_len = 0;
 	
@@ -59,7 +65,7 @@ namespace rf {
 	void hw_setStateSleep();
 	void hw_initSPI();
 	uint16_t hw_sendCMD(uint16_t command);
-	char hw_sendCMDByte(char out);
+	uint8_t hw_sendCMDByte(uint8_t out);
 
 	// Init spi
 	inline void hw_initSPI() {
@@ -80,7 +86,7 @@ namespace rf {
     	// https://www.arduino.cc/en/Tutorial/SPIEEPROM
     	#ifdef SPCR
     		SPCR = _BV(SPE) | _BV(MSTR); 
-    		// bitSet(SPCR, SPR0); // Not required -> Remove for faster transfer (see above comment)
+    		bitSet(SPCR, SPR0); // Not required -> Remove for faster transfer (see above comment)
     		
     		// use clk/2 (2x 1/4th) for sending (and clk/8 for recv, see rf12_xferSlow)
     		// Comment from Jeelabs RF12
@@ -159,18 +165,27 @@ namespace rf {
     	hw_sendCMD(0xC483); // @PWR,NO RSTRIC,!st,!fi,OE,EN
     	hw_sendCMD(0x9850); // !mp,90kHz,MAX OUT
     	hw_sendCMD(0xCC77); // OB1，OB0, LPX,！ddy，DDIT，BW0
-    	//hw_sendCMD(0xE000); // NOT USE
-    	//hw_sendCMD(0xC800); // NOT USE
-    	//hw_sendCMD(0xC049); // 1.66MHz,3.1V
+    	
+    	
+    	// Uncomment
+    	hw_sendCMD(0xE000); // NOT USE
+    	hw_sendCMD(0xC800); // NOT USE
+    	hw_sendCMD(0xC049); // 1.66MHz,3.1V
+    	
+    	
+    	// Set state idle
+    	hw_setStateIdle();
     	
     	// Setup interrupt
     	attachInterrupt(0, hw_interrupt, LOW);
 	}
 	
 	void hw_interrupt() {
+		hw_sendCMD(0x0000); // Wake up
+	
 		if (hw_state == STATE_RX) {
 			// Read from reciever
-			char in = hw_sendCMD(0xB000);
+			uint8_t in = hw_sendCMD(0xB000);
 			
 			if (hw_buffer_index == 0 && hw_buffer_len == 0) {
 				// Read length of package
@@ -179,6 +194,8 @@ namespace rf {
 				// Detect if length is bigger than max length
 				if (hw_buffer_len > MAX_LEN) {
 					hw_buffer_len = 0;
+					// Go to idle and change state
+					hw_setStateIdle();
 				}
 			} else {
 				// Read to byte array
@@ -193,7 +210,7 @@ namespace rf {
 		} else if (hw_state != STATE_IDLE) {
 			// Should never interrupt in IDLE mode - but just to be sure
 			// Chooce what to send
-			char out;
+			uint8_t out;
 			if (hw_state == STATE_TX_BYTE0) {
 				out = 0x2D;
 			} else if (hw_state == STATE_TX_FILTER) {
@@ -204,8 +221,13 @@ namespace rf {
 				// hw_state is 0 indexed
 				// hw_buffer_len is 1 indexed
 				out = hw_buffer[hw_state];
+			} else if (hw_state == hw_buffer_len) {
+				out = 0xBB;
+			} else if (hw_state == STATE_TX_PRE0 || hw_state == STATE_TX_PRE1 || hw_state == STATE_TX_PRE2) {
+				out = 0xAA;
 			} else {
 				hw_setStateIdle();
+				
 				return;
 			}
 			
@@ -236,20 +258,20 @@ namespace rf {
 	}
 	
 	inline void hw_setStateTransmitter() {
-		hw_state = STATE_TX_BYTE0;
+		hw_state = STATE_TX_PRE0;
 		hw_sendCMD(0x823D);
 	}
 	
 	inline void hw_setStateSleep() {
-	
+		hw_sendCMD(0x8205);
 	}
 	
-	inline bool hw_send(char byte) {
-		char data[] = { byte };
+	inline bool hw_send(uint8_t byte) {
+		uint8_t data[] = { byte };
 		return hw_send(data, 1);
 	}
 	
-	bool hw_send(const char buffer[], uint8_t len) {
+	bool hw_send(const uint8_t buffer[], uint8_t len) {
 		if (len < 0)
 			return false;
 			
@@ -276,22 +298,29 @@ namespace rf {
 		return hw_state == STATE_IDLE;
 	}
 	
-	char* hw_recieve(uint8_t* length) {
-		if (hw_state == STATE_RX && hw_buffer_index >= hw_buffer_len) {
+	uint8_t* hw_recieve(uint8_t* length) {
+		if (hw_state == STATE_RX && hw_buffer_index >= hw_buffer_len && hw_buffer_index != 0) {
 			hw_state = STATE_IDLE;
 			
 			*length = hw_buffer_len;
 			hw_buffer_index = 0;
+			hw_buffer_len = 0;
 			
 			return hw_buffer;
 		} else if (hw_state == STATE_IDLE) {
 			hw_setStateRecieve();
+			Serial.println("Set state recieve");
 		}
 		
 		return NULL;
 	}
 	
 	uint16_t hw_sendCMD (uint16_t command) {
+		// Change spi speed - see https://www.arduino.cc/en/Tutorial/SPIEEPROM
+		#if F_CPU > 10000000
+    		bitSet(SPCR, SPR0);
+		#endif
+	
     	hw_enableRF(); // Chip select (activate SPI)
     
     	// Send first 8 bytes and read first 8 bytes reply - then the next 8 bytes
@@ -300,12 +329,16 @@ namespace rf {
     
     	hw_disableRF(); // Chip select (deactivate SPI)
     	
+    	#if F_CPU > 10000000
+    		bitClear(SPCR, SPR0);
+		#endif
+    	
     	return response;
 	}
 	
 	// Sends one byte and returns one byte. Please note that RFM12 is expecting 2 bytes for each command
 	// https://www.arduino.cc/en/Tutorial/SPIEEPROM
-	char hw_sendCMDByte (char out) {
+	uint8_t hw_sendCMDByte (uint8_t out) {
 		// Arduino
 		#ifdef SPDR
 			SPDR = out;                    // Start the transmission
