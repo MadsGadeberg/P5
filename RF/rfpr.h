@@ -28,6 +28,6 @@ namespace rf {
 	typedef enum packetTypes packetTypes;
 
 	bool pr_send(packetTypes packetType, uint16_t RID, char VID, uint16_t data);
-	bool pr_receive();
+	bool pr_receive(void* output);
 	bool pr_send_connectRequest(uint16_t RID, char VID);
 }
