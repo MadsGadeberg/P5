@@ -17,12 +17,11 @@ void setup() {
   rf::hw_init((uint8_t)GROUP);
   delay(3000);
   while (myVID == -1)
-    registerToBase();
+    myVID = registerToBase();
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-
+  
 }
 
 int registerToBase()
@@ -32,6 +31,7 @@ int registerToBase()
   void* data = malloc(sizeof(10)); // TODO Size?
   rf::pr_receive(data);
 
+  // If no confirmation (and a VID) is received from the base
   return -1;
 }
 
@@ -49,7 +49,6 @@ void adcSetup() {
   // ADEN enables adc
   // ADPS 0:2 Controls the input clock to the adc
   ADCSRA = (1 << ADEN) | (1 << ADPS0) | (1 << ADPS1) | (1 << ADPS2);
-
 
   // ADCSRB - ADC Control and Status Register B
   // "BIN" or "7" selects unipolar mode
