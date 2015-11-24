@@ -21,15 +21,15 @@ void adcSetup();
 int registerToBase();
 
 void setup() {
-  adcSetup();
-  rf::hw_init((uint8_t)GROUP);
-  delay(3000);
+  adcSetup(); // Setting the correct ports of ADC
+  rf::hw_init((uint8_t)GROUP); // Initializing the RF module
+  delay(3000); // Waiting for the RF module to power up
   while (myVID == -1)
-    myVID = registerToBase();
+    myVID = registerToBase(); // Waiting for the base to acknowledge us, granting a VID
 }
 
 void loop() {
-	if (millis() - lastSleep > TIME_BETWEEN_PING) // Need a threshold
+	if (millis() - lastSleep > TIME_BETWEEN_PING) // TODO Need a threshold
 	{
 		// Turn on RF module, receive data, check if data is a ping
 
@@ -47,8 +47,8 @@ void loop() {
 		samplesCounter = 0;
 	}
 	
-	sampleArray[samplesCounter++] = (uint16_t)getSample();
-	delay(WAIT_TIME_FOR_ADC); // TODO Need time to send as well
+	sampleArray[samplesCounter < SAMPLE_ARRAY_SIZE ? samplesCounter++ : samplesCounter] = (uint16_t)getSample(); // Getting value from the straingauge
+	delay(WAIT_TIME_FOR_ADC);
 }
 
 int registerToBase()
