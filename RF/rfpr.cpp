@@ -70,22 +70,23 @@ namespace rf {
 		return bytearray;
 	}
 	
-	bool pr_send(connectRequest input) {
+	bool pr_send(struct connectRequest input) {
 		return hw_send(getByteArrayForConnectRequest(input), 3);
 	}
 	
-	bool pr_send(connectedConfirmation input) {
+	bool pr_send(struct connectedConfirmation input) {
 		return hw_send(getByteArrayForConnectConfirmation(input), 3);
 	}
 	
-	bool pr_send(ping input) {
+	bool pr_send(struct ping input) {
 		return hw_send(getByteArrayForPing(input), 3);
 	}
 	
-	bool pr_send(dataSending input) {
+	bool pr_send(struct dataSending input) {
 		return hw_send(getByteArrayForDatasending(input), 3);
 	}
 	
+	// TODO The base needs to returns the satellites' VID
 	bool pr_send_connectRequest(uint16_t RID, char VID) {
 		struct connectRequest myConnectRequest;
 		myConnectRequest.RID = RID;

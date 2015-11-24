@@ -3,34 +3,31 @@
 namespace rf {
 	struct connectRequest {
 		uint16_t RID;
+		uint16_t checksum;
 	};
 
 	struct connectedConfirmation {
 		char VID;
 		uint16_t RID;
+		uint32_t checksum;
 	};
 
 	struct ping {
 		char VID;
+		uint8_t checksum;
 	};
 
 	struct dataSending {
 		uint16_t data[20];
+		uint16_t checksum;
 	};
-	
-	struct packetdata {
-		bool valid;
-		uint16_t value;
-    };
-	
-	struct dataRecieving {
-		packetdata data[20];
-	};
-	
+
 	enum packetTypes {
-		CONNECT_REQUEST, CONNECTED_CONFIRMATION, PING, DATA, INVALID
+		connectRequestPacket, connectedConfirmationPacket, pingPacket, dataSendingPacket
 	};
 	typedef enum packetTypes packetTypes;
 
-	char* pr_receive();
+	bool pr_send(packetTypes packetType, uint16_t RID, char VID, uint16_t data);
+	bool pr_receive();
+	bool pr_send_connectRequest(uint16_t RID, char VID);
 }
