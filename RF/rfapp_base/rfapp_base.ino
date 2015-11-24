@@ -1,13 +1,9 @@
 #include <rfpr.h>
 #include <rfhw.h>
+#include <rfapp.h>
 
 // Global variables
 int nextVID = 0;
-
-// Global constants
-#define GROUP 20
-#define WAIT_FOR_CONNECTS_TIME 5000 // 5 seconds
-#define RF_POWER_UP_TIME 3000 // 3 seconds
 
 void setup() {
 	rf::hw_init((uint8_t)GROUP); // Initializing the RF module
@@ -20,5 +16,9 @@ void loop() {
 		// Turn on RF, receive data, if connectRequest send confirmation
 	}
 
-
+	for (int i = 0; i < nextVID; i++)
+	{
+		rf::pr_send_ping((char)i);
+		delay(TIME_BETWEEN_PING / nextVID);
+	}
 }

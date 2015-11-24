@@ -1,13 +1,6 @@
 #include <rfpr.h>
 #include <rfhw.h>
-
-// Global constants
-#define RID 1
-#define GROUP 20
-#define SAMPLE_ARRAY_SIZE 50
-#define TIME_BETWEEN_PING 200 // We will get pinged for data at least every x ms
-#define WAIT_TIME_FOR_ADC 3
-#define RF_POWER_UP_TIME 3000
+#include <rfapp.h>
 
 // Global variables
 int myVID = -1; // Not allocated
