@@ -7,6 +7,7 @@
 #define SAMPLE_ARRAY_SIZE 50
 #define TIME_BETWEEN_PING 200 // We will get pinged for data at least every x ms
 #define WAIT_TIME_FOR_ADC 3
+#define RF_POWER_UP_TIME 3000
 
 // Global variables
 int myVID = -1; // Not allocated
@@ -23,7 +24,7 @@ int registerToBase();
 void setup() {
   adcSetup(); // Setting the correct ports of ADC
   rf::hw_init((uint8_t)GROUP); // Initializing the RF module
-  delay(3000); // Waiting for the RF module to power up
+  delay(RF_POWER_UP_TIME); // Waiting for the RF module to power up
   while (myVID == -1)
     myVID = registerToBase(); // Waiting for the base to acknowledge us, granting a VID
 }
