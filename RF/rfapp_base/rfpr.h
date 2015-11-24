@@ -30,4 +30,5 @@ namespace rf {
 	bool pr_send(packetTypes packetType, uint16_t RID, char VID, uint16_t data);
 	bool pr_receive(void* output);
 	bool pr_send_connectRequest(uint16_t RID, char VID);
+	bool pr_send_dataSending(uint16_t data[]);
 }

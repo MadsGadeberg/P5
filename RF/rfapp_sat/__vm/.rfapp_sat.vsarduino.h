@@ -86,10 +86,4 @@ extern "C" void __cxa_pure_virtual() {;}
 #define portInputRegister(P)
 #define portModeRegister(P)
 #include <rfapp_sat.ino>
-#include <Test.cpp>
-#include <Test.h>
-#include <rfhw.cpp>
-#include <rfhw.h>
-#include <rfpr.cpp>
-#include <rfpr.h>
 #endif

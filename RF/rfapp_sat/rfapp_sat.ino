@@ -1,16 +1,24 @@
 #include <rfpr.h>
 #include <rfhw.h>
 
-// Global variables
-int myVID = -1; // Not allocated
-
 // Global constants
 #define RID 1
 #define GROUP 20
+#define SAMPLE_ARRAY_SIZE 50
+#define TIME_BETWEEN_PING 200 // We will get pinged for data at least every x ms
+#define WAIT_TIME_FOR_ADC 3
+
+// Global variables
+int myVID = -1; // Not allocated
+int samplesCounter = 0; // Needed in order to check how much data we're sending
+uint16_t sampleArray[SAMPLE_ARRAY_SIZE]; // The data being sent to the base
+unsigned long int lastSleep = 0; // We must sleep between each ping in order to save battery
+bool pingReceived;
 
 // Prototypes
 int getSample();
 void adcSetup();
+int registerToBase();
 
 void setup() {
   adcSetup();
@@ -21,7 +29,26 @@ void setup() {
 }
 
 void loop() {
-  
+	if (millis() - lastSleep > TIME_BETWEEN_PING) // Need a threshold
+	{
+		// Turn on RF module, receive data, check if data is a ping
+
+		// If true:
+		pingReceived = true;
+		// Let the RF module sleep
+		lastSleep = millis();
+
+		// If false: Do nothing
+	}
+
+	if (pingReceived)
+	{
+		rf::pr_send_dataSending(sampleArray);
+		samplesCounter = 0;
+	}
+	
+	sampleArray[samplesCounter++] = (uint16_t)getSample();
+	delay(WAIT_TIME_FOR_ADC); // TODO Need time to send as well
 }
 
 int registerToBase()
@@ -30,6 +57,10 @@ int registerToBase()
 
   void* data = malloc(sizeof(10)); // TODO Size?
   rf::pr_receive(data);
+
+  // Do something with the data
+
+  free(data);
 
   // If no confirmation (and a VID) is received from the base
   return -1;
