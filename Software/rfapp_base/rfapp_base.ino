@@ -16,9 +16,11 @@ void loop() {
 		// Turn on RF, receive data, if connectRequest send confirmation
 	}
 
-	for (int i = 0; i < nextVID; i++)
+	for (auto i = 0; i < nextVID; i++)
 	{
 		rf::pr_send_ping((char)i);
 		delay(TIME_BETWEEN_PING / nextVID);
 	}
+
+	// Receive, check if DataSending packet. Do some stuff with that.
 }
