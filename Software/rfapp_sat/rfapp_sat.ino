@@ -3,12 +3,17 @@
 #include <rfapp.h>
 #include <Arduino.h>
 
+// Constants
+#define RID 1
+#define WAIT_TIME_FOR_ADC 3
+
 // Global variables
 int myVID = -1; // Not allocated
 int samplesCounter = 0; // Needed in order to check how much data we're sending
 uint16_t sampleArray[SAMPLE_ARRAY_SIZE]; // The data being sent to the base
 unsigned long int lastSleep = 0; // We must sleep between each ping in order to save battery
 bool pingReceived;
+char data[20];
 
 // Prototypes
 int getSample();
@@ -48,17 +53,19 @@ void loop() {
 
 int registerToBase()
 {
-  rf::pr_send_connectRequest((uint16_t)RID, '5'); // TODO The base needs to returns the satellites' VID
+  uint16_t newVID = -1; // -1 indicates that no VID have been assigned
+	
+  rf::pr_send_connectRequest((uint16_t)RID);
 
-  void* data = malloc(sizeof(10)); // TODO Size?
-  rf::pr_receive(data);
+  rf::packetTypes type = rf::pr_receive(data);
+  if (type == rf::CONNECTED_CONFIRMATION)
+  {
+	  struct rf::connectedConfirmation *confirmation;
+	  confirmation = (rf::connectedConfirmation*)data;
+	  newVID = (confirmation->VID);
+  }
 
-  // Do something with the data
-
-  free(data);
-
-  // If no confirmation (and a VID) is received from the base
-  return -1;
+  return newVID;
 }
 
 void adcSetup() {

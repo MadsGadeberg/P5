@@ -5,6 +5,8 @@
 
 // Global variables
 int nextVID = 0;
+char data[20];
+uint16_t connectedSatellites[10];
 
 void setup() {
 	rf::hw_init((uint8_t)GROUP); // Initializing the RF module
@@ -12,9 +14,17 @@ void setup() {
 }
 
 void loop() {
-	if (millis() < RF_POWER_UP_TIME + WAIT_FOR_CONNECTS_TIME) // TODO Overhead at skulle tjekke hver gang?
+	while (millis() < RF_POWER_UP_TIME + WAIT_FOR_CONNECTS_TIME) // Letting satellites register for WAIT_FOR_CONNECTS_TIME ms
 	{
-		// Turn on RF, receive data, if connectRequest send confirmation
+		rf::packetTypes type = rf::pr_receive(data);
+		if (type == rf::CONNECT_REQUEST)
+		{
+			struct rf::connectRequest *request;
+			request = (rf::connectRequest*)data;
+			uint16_t satelliteRID = (request->RID);
+
+			rf::pr_send_connectedConfirmation(satelliteRID, nextVID++);
+		}
 	}
 
 	for (auto i = 0; i < nextVID; i++)
