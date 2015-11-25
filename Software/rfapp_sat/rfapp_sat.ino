@@ -1,6 +1,7 @@
 #include <rfpr.h>
 #include <rfhw.h>
 #include <rfapp.h>
+#include <Arduino.h>
 
 // Global variables
 int myVID = -1; // Not allocated
