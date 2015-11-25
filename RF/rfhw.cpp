@@ -32,7 +32,7 @@
 
 // MAX_LEN for packet
 // uint8_t used for states
-#define MAX_LEN 		0xf7
+#define MAX_LEN 		50 		// Only need 50 bytes to send - therefore save memory // 0xf7
 
 // States
 #define STATE_TX_PRE0	0xfa
@@ -51,9 +51,9 @@
 #define FILTER    20
 
 namespace rf {
-	uint8_t hw_state = STATE_IDLE;
+	volatile uint8_t hw_state = STATE_IDLE;
 	uint8_t hw_buffer[MAX_LEN];
-	uint8_t hw_buffer_index = 0;
+	volatile uint8_t hw_buffer_index = 0;
 	uint8_t hw_buffer_len = 0;
 	
 	void hw_interrupt();
@@ -64,6 +64,9 @@ namespace rf {
 	void hw_setStateTransmitter();
 	void hw_setStateSleep();
 	void hw_initSPI();
+	void hw_enableIRQ();
+	void hw_disableIRQ();
+	bool hw_canSend();
 	uint16_t hw_sendCMD(uint16_t command);
 	uint8_t hw_sendCMDByte(uint8_t out);
 
@@ -108,7 +111,7 @@ namespace rf {
 		hw_initSPI();
     
     	hw_sendCMD(0x0000); // initial SPI transfer added to avoid power-up problem
-    	hw_setStateSleep(); // DC (disable clk pin), enable lbd
+    	hw_setStateSleep();
 
     	// wait until RFM12B is out of power-up reset, this takes several *seconds*
     	hw_sendCMD(0xB800); // in case we're still in OOK mode
@@ -161,20 +164,16 @@ namespace rf {
     	hw_sendCMD(0xCE00 | FILTER); // SYNC=2DXX；
         
     	// AFC Command
-    	// 
     	hw_sendCMD(0xC483); // @PWR,NO RSTRIC,!st,!fi,OE,EN
     	hw_sendCMD(0x9850); // !mp,90kHz,MAX OUT
     	hw_sendCMD(0xCC77); // OB1，OB0, LPX,！ddy，DDIT，BW0
     	
-    	
-    	// Uncomment
-    	hw_sendCMD(0xE000); // NOT USE
-    	hw_sendCMD(0xC800); // NOT USE
-    	hw_sendCMD(0xC049); // 1.66MHz,3.1V
-    	
+    	// hw_sendCMD(0xE000); // NOT USE
+    	// hw_sendCMD(0xC800); // NOT USE
+    	// hw_sendCMD(0xC049); // 1.66MHz,3.1V
     	
     	// Set state idle
-    	hw_setStateIdle();
+    	hw_setStateSleep();
     	
     	// Setup interrupt
     	attachInterrupt(0, hw_interrupt, LOW);
@@ -195,7 +194,7 @@ namespace rf {
 				if (hw_buffer_len > MAX_LEN) {
 					hw_buffer_len = 0;
 					// Go to idle and change state
-					hw_setStateIdle();
+					hw_setStateSleep();
 				}
 			} else {
 				// Read to byte array
@@ -203,8 +202,8 @@ namespace rf {
 				
 				// Detect end of recieve
 				if (hw_buffer_index >= hw_buffer_len) {
-					// Go to idle but do not change state
-					hw_sendCMD(0x820D);
+					// Go to sleep but do not change state
+					hw_sendCMD(0x8201);
 				}
 			}
 		} else if (hw_state != STATE_IDLE) {
@@ -226,16 +225,19 @@ namespace rf {
 			} else if (hw_state == STATE_TX_PRE0 || hw_state == STATE_TX_PRE1 || hw_state == STATE_TX_PRE2) {
 				out = 0xAA;
 			} else {
-				hw_setStateIdle();
+				// Sleep RF module
+				hw_setStateSleep();
 				
 				return;
 			}
 			
+			// Change state
+			hw_state++;
+			
 			// Send data
 			hw_sendCMD(0xB800 | out);
 			
-			// Change state
-			hw_state++;
+			//Serial.println(hw_state);
 		}
 	}
 	
@@ -249,21 +251,39 @@ namespace rf {
 
 	inline void hw_setStateRecieve() {
 		hw_state = STATE_RX;
-		hw_sendCMD(0x82DD);
+		
+		// Power Management Command
+		// Enable receiver: &0x80
+		// Enable base band block: &0x40
+		// Enable synthesizer: &0x10
+		// Enable crystal oscillator: &0x8
+		// Disable clock output of CLK pin: &0x1 (Clock is generated from master)
+		hw_sendCMD(0x82D9);
 	}
 	
+	/*
 	inline void hw_setStateIdle() {
 		hw_state = STATE_IDLE;
 		hw_sendCMD(0x820D);
-	}
+	}*/
 	
 	inline void hw_setStateTransmitter() {
 		hw_state = STATE_TX_PRE0;
-		hw_sendCMD(0x823D);
+		
+		// Power Management Command
+		// Enable transmitter: &0x20
+		// Enable synthesizer: &0x10
+		// Enable crystal oscillator: &0x8
+		// Disable clock output of CLK pin: &0x1 (Clock is generated from master)
+		hw_sendCMD(0x8239);
 	}
 	
 	inline void hw_setStateSleep() {
-		hw_sendCMD(0x8205);
+		hw_state = STATE_IDLE;
+		
+		// Power Management Command
+		// Disable clock output of CLK pin: &0x1 (Clock is generated from master)
+		hw_sendCMD(0x8201);
 	}
 	
 	inline bool hw_send(uint8_t byte) {
@@ -277,10 +297,10 @@ namespace rf {
 			
 		if (len > MAX_LEN)
 			return false;
-			
-		if (hw_state != STATE_IDLE) 
+		
+		if (!hw_canSend())
 			return false;
-			
+
 		// Copy buffer in buffer
 		memcpy(hw_buffer, buffer, len);
 		
@@ -295,6 +315,18 @@ namespace rf {
 	}
 	
 	bool hw_canSend() {
+		// Check if we can stop the reciever
+		// Status Read Command
+		// Antenna tuning signal strength: &0x100
+		// Serial.println(hw_sendCMD(0x0000); & 0x0100 == 0);
+		// Remember to disable IRQ
+		
+		// Possible Race condition on hw_state and hw_buffer_index
+		/*if (hw_state == STATE_RX && hw_buffer_index == 0) { // && hw_sendCMD(0x0000) & 0x0100 == 0) {
+			// Set state to sleep - sets hw_state to IDLE
+			hw_setStateSleep();
+		}*/
+		
 		return hw_state == STATE_IDLE;
 	}
 	
@@ -309,10 +341,29 @@ namespace rf {
 			return hw_buffer;
 		} else if (hw_state == STATE_IDLE) {
 			hw_setStateRecieve();
-			Serial.println("Set state recieve");
 		}
 		
 		return NULL;
+	}
+	
+	void hw_enableIRQ() {
+		#ifdef EIMSK
+			// Arduino
+    		bitClear(EIMSK, INT0);
+    	#else
+    		// ATtiny
+    		bitClear(GIMSK, INT0);
+    	#endif
+	}
+	
+	void hw_disableIRQ() {
+		#ifdef EIMSK
+			// Arduino
+    		bitSet(EIMSK, INT0);
+    	#else
+    		// ATtiny
+    		bitSet(GIMSK, INT0);
+    	#endif
 	}
 	
 	uint16_t hw_sendCMD (uint16_t command) {
