@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Sketch1.ino" />
+    <None Include="Satellite.ino" />
   </ItemGroup>
  
 </Project>
