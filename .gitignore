@@ -83,7 +83,6 @@ ipch/
 *.psess
 *.vsp
 *.vspx
-*.vcxproj
 
 # TFS 2012 Local Workspace
 $tf/
