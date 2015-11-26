@@ -15,11 +15,11 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="__vm\.rfapp_sat.vsarduino.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
+    <None Include="Base.ino" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="rfapp_sat.ino" />
+    <ClInclude Include="__vm\.Sketch1.vsarduino.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
