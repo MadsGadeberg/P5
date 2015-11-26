@@ -32,7 +32,7 @@
 
 // MAX_LEN for packet
 // uint8_t used for states
-#define MAX_LEN 		50 		// Only need 50 bytes to send - therefore save memory // 0xf7
+#define MAX_LEN 		0xf7 // Can be changed to minimize memory consumption
 
 // States
 #define STATE_TX_PRE0	0xfa
@@ -52,11 +52,11 @@
 
 namespace rf {
 	volatile uint8_t hw_state = STATE_IDLE;
-	uint8_t hw_buffer[MAX_LEN];
+	volatile uint8_t hw_buffer[MAX_LEN];
 	volatile uint8_t hw_buffer_index = 0;
-	uint8_t hw_buffer_len = 0;
+	volatile uint8_t hw_buffer_len = 0;
 	
-	void hw_interrupt();
+	static void hw_interrupt();
 	void hw_enableRF();
 	void hw_disableRF();
 	void hw_setStateRecieve();
@@ -68,6 +68,7 @@ namespace rf {
 	void hw_disableIRQ();
 	bool hw_canSend();
 	uint16_t hw_sendCMD(uint16_t command);
+	uint16_t hw_sendCMDIRQ(uint16_t command);
 	uint8_t hw_sendCMDByte(uint8_t out);
 
 	// Init spi
@@ -179,7 +180,7 @@ namespace rf {
     	attachInterrupt(0, hw_interrupt, LOW);
 	}
 	
-	void hw_interrupt() {
+	static void hw_interrupt() {
 		hw_sendCMD(0x0000); // Wake up
 	
 		if (hw_state == STATE_RX) {
@@ -210,34 +211,31 @@ namespace rf {
 			// Should never interrupt in IDLE mode - but just to be sure
 			// Chooce what to send
 			uint8_t out;
-			if (hw_state == STATE_TX_BYTE0) {
+			
+			// Read and update state
+			uint8_t state = hw_state++;
+			
+			if (state == STATE_TX_BYTE0) {
 				out = 0x2D;
-			} else if (hw_state == STATE_TX_FILTER) {
+			} else if (state == STATE_TX_FILTER) {
 				out = FILTER;
-			} else if (hw_state == STATE_TX_LEN) {
+			} else if (state == STATE_TX_LEN) {
 				out = hw_buffer_len;
-			} else if (hw_state < hw_buffer_len) {
-				// hw_state is 0 indexed
+			} else if (state < hw_buffer_len) {
+				// state is 0 indexed
 				// hw_buffer_len is 1 indexed
-				out = hw_buffer[hw_state];
-			} else if (hw_state == hw_buffer_len) {
-				out = 0xBB;
-			} else if (hw_state == STATE_TX_PRE0 || hw_state == STATE_TX_PRE1 || hw_state == STATE_TX_PRE2) {
+				out = hw_buffer[state];
+			} else if (state == STATE_TX_PRE0 || state == STATE_TX_PRE1 || state == STATE_TX_PRE2) {
 				out = 0xAA;
 			} else {
-				// Sleep RF module
-				hw_setStateSleep();
-				
-				return;
-			}
+				out = 0xBB;
 			
-			// Change state
-			hw_state++;
+				// Sleep RF module
+				hw_setStateSleep();				
+			}
 			
 			// Send data
 			hw_sendCMD(0xB800 | out);
-			
-			//Serial.println(hw_state);
 		}
 	}
 	
@@ -268,14 +266,16 @@ namespace rf {
 	}*/
 	
 	inline void hw_setStateTransmitter() {
-		hw_state = STATE_TX_PRE0;
+		hw_state = STATE_TX_BYTE0;//STATE_TX_PRE0;
 		
 		// Power Management Command
 		// Enable transmitter: &0x20
 		// Enable synthesizer: &0x10
 		// Enable crystal oscillator: &0x8
 		// Disable clock output of CLK pin: &0x1 (Clock is generated from master)
-		hw_sendCMD(0x8239);
+		//hw_sendCMD(0x8239);
+		
+		hw_sendCMD(0x823D);
 	}
 	
 	inline void hw_setStateSleep() {
@@ -300,9 +300,9 @@ namespace rf {
 		
 		if (!hw_canSend())
 			return false;
-
+			
 		// Copy buffer in buffer
-		memcpy(hw_buffer, buffer, len);
+		memcpy((void*)hw_buffer, buffer, len);
 		
 		// Setup buffer index and len
 		hw_buffer_index = 0;
@@ -322,15 +322,15 @@ namespace rf {
 		// Remember to disable IRQ
 		
 		// Possible Race condition on hw_state and hw_buffer_index
-		/*if (hw_state == STATE_RX && hw_buffer_index == 0) { // && hw_sendCMD(0x0000) & 0x0100 == 0) {
+		if (hw_state == STATE_RX && hw_buffer_index == 0) {// && hw_sendCMDIRQ(0x0000) & 0x0100 == 0) {
 			// Set state to sleep - sets hw_state to IDLE
 			hw_setStateSleep();
-		}*/
+		}
 		
 		return hw_state == STATE_IDLE;
 	}
 	
-	uint8_t* hw_recieve(uint8_t* length) {
+	volatile uint8_t* hw_recieve(uint8_t* length) {
 		if (hw_state == STATE_RX && hw_buffer_index >= hw_buffer_len && hw_buffer_index != 0) {
 			hw_state = STATE_IDLE;
 			
@@ -364,6 +364,16 @@ namespace rf {
     		// ATtiny
     		bitSet(GIMSK, INT0);
     	#endif
+	}
+	
+	uint16_t hw_sendCMDIRQ(uint16_t command) {
+		hw_disableIRQ();
+		
+		uint16_t result = hw_sendCMD(command);
+		
+		hw_enableIRQ();
+		
+		return result;
 	}
 	
 	uint16_t hw_sendCMD (uint16_t command) {
