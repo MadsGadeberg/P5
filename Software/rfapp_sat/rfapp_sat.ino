@@ -31,14 +31,13 @@ void setup() {
 void loop() {
 	if (millis() - lastSleep > TIME_BETWEEN_PING) // TODO Need a threshold
 	{
-		// Turn on RF module, receive data, check if data is a ping
-
-		// If true:
-		pingReceived = true;
-		// Let the RF module sleep
-		lastSleep = millis();
-
-		// If false: Do nothing
+		rf::packetTypes type = rf::pr_receive(data);
+		if (type == rf::PING && ((rf::ping*)data)->VID == myVID)
+		{
+			pingReceived = true;
+			// Let the RF module sleep
+			lastSleep = millis();
+		}
 	}
 
 	if (pingReceived)
