@@ -1,6 +1,6 @@
-#include <rfpr.h>
-#include <rfhw.h>
-#include <rfapp.h>
+#include <../Libraries/rfpr.h>
+#include <../Libraries/rfhw.h>
+#include <../Libraries/rfapp.h>
 #include <Arduino.h>
 
 // Global variables
@@ -27,7 +27,7 @@ void loop() {
 		}
 	}
 
-	for (auto i = 0; i < nextVID; i++)
+	for (int i = 0; i < nextVID; i++)
 	{
 		rf::pr_send_ping((char)i);
 		delay(TIME_BETWEEN_PING / nextVID);
