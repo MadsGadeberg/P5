@@ -17,7 +17,6 @@ void registerSatellite();
 
 void setup() {
 	rf::hw_init((uint8_t)GROUP); // Initializing the RF module
-	delay(RF_POWER_UP_TIME); // Waiting for the RF module to power up
 }
 
 void loop() {
@@ -37,7 +36,7 @@ void loop() {
 		auto data = (request->data);
 	}
 
-	for (int i = 0; i < 20; i++) // HARDCODE!!
+	for (int i = 0; i < SAMPLE_ARRAY_SIZE; i++)
 	{
 		Serial.print(satelliteNumber);
 		Serial.print(data[i]); // TODO Check for out of bounds
