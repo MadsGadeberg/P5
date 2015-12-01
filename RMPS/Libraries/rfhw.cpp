@@ -340,6 +340,9 @@ namespace rf {
 			
 			return hw_buffer;
 		} else if (hw_state == STATE_IDLE) {
+			hw_buffer_index = 0;
+			hw_buffer_len = 0;
+		
 			hw_setStateRecieve();
 		}
 		
