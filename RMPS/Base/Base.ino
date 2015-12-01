@@ -3,8 +3,6 @@
 #include "../Libraries/rfapp.h"
 #include <Arduino.h>
 
-using namespace rf;
-
 // Global variables
 int nextVID = 0; // This value also shows how many connected satellites we have
 char data[20];
