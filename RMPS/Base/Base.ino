@@ -3,10 +3,8 @@
 #include "../Libraries/rfapp.h"
 #include <Arduino.h>
 
-using namespace rf;
-
 // Global variables
-int nextVID = 0;
+int nextVID = 0; // This value also shows how many connected satellites we have
 char data[20];
 int satelliteNumber = 0;
 unsigned long int pingSent = 0;
@@ -17,11 +15,10 @@ void registerSatellite();
 
 void setup() {
 	rf::hw_init((uint8_t)GROUP); // Initializing the RF module
-	delay(RF_POWER_UP_TIME); // Waiting for the RF module to power up
 }
 
 void loop() {
-	while (millis() < RF_POWER_UP_TIME + WAIT_FOR_CONNECTS_TIME) 
+	while (millis() < WAIT_FOR_CONNECTS_TIME) 
 		registerSatellite(); // Letting satellites register for WAIT_FOR_CONNECTS_TIME ms
 
 	rf::pr_send_ping((char)satelliteNumber);
@@ -37,15 +34,17 @@ void loop() {
 		auto data = (request->data);
 	}
 
-	for (int i = 0; i < 20; i++) // HARDCODE!!
+	for (int i = 0; i < SAMPLE_ARRAY_SIZE; i++)
 	{
 		Serial.print(satelliteNumber);
 		Serial.print(data[i]); // TODO Check for out of bounds
 		Serial.print(millis());
 	}
 
-	delay(WAIT_FOR_CONNECTS_TIME - (millis() - pingSent)); 
+	delay(TIME_BETWEEN_PING - (millis() - pingSent));
 	satelliteNumber++;
+
+	satelliteNumber = (satelliteNumber + 1) % nextVID;
 }
 
 void registerSatellite()
