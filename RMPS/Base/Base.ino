@@ -20,7 +20,7 @@ void setup() {
 }
 
 void loop() {
-	while (millis() < RF_POWER_UP_TIME + WAIT_FOR_CONNECTS_TIME) 
+	while (millis() < WAIT_FOR_CONNECTS_TIME) 
 		registerSatellite(); // Letting satellites register for WAIT_FOR_CONNECTS_TIME ms
 
 	rf::pr_send_ping((char)satelliteNumber);
