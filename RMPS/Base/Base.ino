@@ -8,7 +8,7 @@ using namespace rf;
 // Global variables
 int nextVID = 0;
 char data[20];
-int i = 0;
+int satelliteNumber = 0;
 unsigned long int pingSent = 0;
 uint16_t connectedSatellites[10];
 
@@ -31,7 +31,7 @@ void loop() {
 		}
 	}
 
-	rf::pr_send_ping((char)i);
+	rf::pr_send_ping((char)satelliteNumber);
 	pingSent = millis();
 	
 	delayMicroseconds(3); // Need to wait for other device's RF module
@@ -44,6 +44,13 @@ void loop() {
 		auto data = (request->data);
 	}
 
+	for (int i = 0; i < 20; i++) // HARDCODE!!
+	{
+		Serial.print(satelliteNumber);
+		Serial.print(data[i]);
+		Serial.print(millis());
+	}
+
 	delay(WAIT_FOR_CONNECTS_TIME - (millis() - pingSent)); 
-	i++;
+	satelliteNumber++;
 }
