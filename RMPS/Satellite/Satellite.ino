@@ -1,6 +1,6 @@
-#include "rfpr.h"
-#include "rfhw.h"
-#include "rfapp.h"
+#include "../Libraries/rfpr.h"
+#include "../Libraries/rfhw.h"
+#include "../Libraries/rfapp.h"
 #include <Arduino.h>
 
 // Constants
@@ -22,7 +22,7 @@ int registerToBase();
 
 void setup() {
 	adcSetup();
-  rf::pr_initRF();
+    rf::pr_initRF();
   
 	while (myVID == -1)
 		myVID = registerToBase(); // Waiting for the base to acknowledge us, granting a VID
