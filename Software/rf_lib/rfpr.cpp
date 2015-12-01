@@ -2,28 +2,25 @@
 #include "rfhw.h"
 #include <stdint.h>
 #include <string.h>
+#include <Arduino.h>
 
 namespace rf {
 	uint8_t crc8_update(uint8_t input, uint8_t lastCrc);
 
-	char* getByteArrayForConnectRequest(struct connectRequest data) {
-		static char bytearray[3];
+	void getByteArrayForConnectRequest(struct connectRequest data, uint8_t* bytearray) {
 		bytearray[0] = ((uint8_t)(1 << 4));
-		bytearray[1] = ((uint8_t)(data.RID >> 8));
+		bytearray[1] = (uint8_t)(data.RID >> 8);
 		bytearray[2] = ((uint8_t)(data.RID));
 		
 		uint8_t crc = 0;
 		for (int i = 0; i < 3; i++) {
 			crc = crc8_update(bytearray[i], crc);
 		}
-		bytearray[0] |= ((uint8_t)(crc << 4));
-		
-		return bytearray;
+		bytearray[0] |= ((uint8_t)(crc & 0xf));
 	}
 
-	char* getByteArrayForConnectConfirmation(struct connectedConfirmation data) {
-		static char bytearray[4];
-		bytearray[0] = ((uint8_t)(2 << 4)) | ((uint8_t)(data.VID << 4));
+	void getByteArrayForConnectConfirmation(struct connectedConfirmation data, uint8_t* bytearray) {
+		bytearray[0] = ((uint8_t)(2 << 4)) | ((uint8_t)(data.VID & 0xf));
 		bytearray[1] = ((uint8_t)(data.RID >> 8));
 		bytearray[2] = ((uint8_t)(data.RID));
 		
@@ -123,7 +120,7 @@ namespace rf {
 	
 	packetTypes pr_receive(char* output){
 		uint8_t lenght = 0;
-		uint8_t* data = hw_recieve(&lenght);
+		uint8_t* data = (uint8_t*)hw_recieve(&lenght);
 		if (data == NULL)
 			return NODATA;
 		
