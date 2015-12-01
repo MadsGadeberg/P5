@@ -33,8 +33,15 @@ void loop() {
 
 	rf::pr_send_ping((char)i);
 	pingSent = millis();
+	// Delay?????
 
-	// Receive, check if sampleDataPacket packet. Do some stuff with that.
+	rf::packetTypes type = rf::pr_receive(data);
+	if (type == rf::DATA)
+	{
+		struct rf::sampleDataPacket *request;
+		request = (rf::sampleDataPacket*)data;
+		auto data = (request->data);
+	}
 
 	delay(WAIT_FOR_CONNECTS_TIME - (millis() - pingSent)); 
 	i++;
