@@ -6,7 +6,7 @@
 using namespace rf;
 
 // Global variables
-int nextVID = 0;
+int nextVID = 0; // This value also shows how many connected satellites we have
 char data[20];
 int satelliteNumber = 0;
 unsigned long int pingSent = 0;
@@ -43,7 +43,7 @@ void loop() {
 		Serial.print(millis());
 	}
 
-	delay(WAIT_FOR_CONNECTS_TIME - (millis() - pingSent)); 
+	delay(TIME_BETWEEN_PING - (millis() - pingSent));
 	satelliteNumber++;
 }
 
