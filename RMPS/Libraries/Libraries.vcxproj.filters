@@ -15,11 +15,25 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Base.ino" />
+    <None Include="src\_micro-api\libraries\LibrariesLib\library.properties" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="__vm\.Base.vsarduino.h">
+    <ClInclude Include="rfapp.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="rfhw.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rfpr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="rfhw.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rfpr.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

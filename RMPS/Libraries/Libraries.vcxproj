@@ -11,9 +11,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{435F14BA-CBFF-4480-AE9E-E908ECEE03B2}</ProjectGuid>
-    <RootNamespace>Satellite</RootNamespace>
-    <ProjectName>Satellite</ProjectName>
+    <ProjectGuid>{BBF45FF3-0A60-47E7-A4A6-31E3566A1F7A}</ProjectGuid>
+    <RootNamespace>Libraries</RootNamespace>
+    <ProjectName>Libraries</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -45,10 +45,10 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>C:\Program Files (x86)\Arduino\hardware\arduino\avr\cores\arduino;C:\Program Files (x86)\Arduino\hardware\arduino\avr\variants\standard;C:\Users\Mikkel\Documents\P5\RMPS\Satellite;C:\Program Files (x86)\Arduino\libraries;C:\Program Files (x86)\Arduino\hardware\arduino\avr\libraries;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\IDE\Extensions\pxnvq4sn.qt0\Micro Platforms\default\debuggers;C:\Users\Mikkel\Documents\P5\P5\P5\libraries;C:\Program Files (x86)\Arduino\hardware\tools\avr/avr/include/;C:\Program Files (x86)\Arduino\hardware\tools\avr//avr/include/avr/;C:\Program Files (x86)\Arduino\hardware\tools\avr/lib\gcc\avr\4.8.1\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <ForcedIncludeFiles>C:\Users\Mikkel\Documents\P5\RMPS\Satellite\__vm\.Satellite.vsarduino.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ForcedIncludeFiles>%(ForcedIncludeFiles)</ForcedIncludeFiles>
       <IgnoreStandardIncludePath>true</IgnoreStandardIncludePath>
-      <PreprocessorDefinitions>__AVR_ATmega328p__;__AVR_ATmega328P__;F_CPU=16000000L;ARDUINO=166;ARDUINO_AVR_UNO;ARDUINO_ARCH_AVR;__cplusplus;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -69,12 +69,16 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <None Include="Satellite.ino">
-      <FileType>CppCode</FileType>
-    </None>
+    <None Include="src\_micro-api\libraries\LibrariesLib\library.properties" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="__vm\.Satellite.vsarduino.h" />
+    <ClInclude Include="rfapp.h" />
+    <ClInclude Include="rfhw.h" />
+    <ClInclude Include="rfpr.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="rfhw.cpp" />
+    <ClCompile Include="rfpr.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
