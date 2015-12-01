@@ -9,9 +9,9 @@
 
 // Global variables
 int myVID = -1; // Not allocated
-int samplesCounter = 0; // Needed in order to check how much data we're sending
+int samplesCounter = 0; // The current nr of the current samples
 uint16_t sampleArray[SAMPLE_ARRAY_SIZE]; // The data being sent to the base
-unsigned long int lastSleep = 0; // We must sleep between each ping in order to save battery
+unsigned long int lastSleep = 0; // the time of last sleep.
 bool pingReceived;
 char data[20];
 
@@ -21,9 +21,9 @@ void adcSetup();
 int registerToBase();
 
 void setup() {
-	rf::hw_init((uint8_t)GROUP); // Initializing the RF module
-	adcSetup(); // Setting the correct ports of ADC
-	delay(RF_POWER_UP_TIME); // Waiting for the RF module to power up
+	adcSetup();
+  rf::pr_initRF();
+  
 	while (myVID == -1)
 		myVID = registerToBase(); // Waiting for the base to acknowledge us, granting a VID
 }
@@ -50,13 +50,11 @@ void loop() {
 	delay(WAIT_TIME_FOR_ADC);
 }
 
-int registerToBase()
-{
+// function that sends the Real ID to the base and returns a Virtual ID if tha base accepts our request
+int registerToBase(){
 	uint16_t newVID = -1; // -1 indicates that no VID have been assigned
 
 	rf::pr_send_connectRequest((uint16_t)RID);
-
-	delayMicroseconds(3); // Need to wait for other device's RF module
 
 	rf::packetTypes type = rf::pr_receive(data);
 	if (type == rf::CONNECTED_CONFIRMATION)
@@ -69,6 +67,7 @@ int registerToBase()
 	return newVID;
 }
 
+// function that sets up the registers to be able to use the ports as Analog input.
 void adcSetup() {
 	// PRR - Power Reduction register
 	PRR = 0x00;
@@ -94,6 +93,7 @@ void adcSetup() {
 	//DIDR0 |= 1 << 1;
 }
 
+// function that reads input from strain gauge.
 int getSample() {
 	// do single conversion
 	ADCSRA |= ((1 << ADSC) | (1 << ADIF));

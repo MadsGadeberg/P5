@@ -36,6 +36,8 @@ namespace rf {
 	};
 	typedef enum packetTypes packetTypes;
 	
+	void pr_initRF();
+
 	bool pr_send(connectRequest input);
 	bool pr_send(connectedConfirmation input);
 	bool pr_send(ping input);

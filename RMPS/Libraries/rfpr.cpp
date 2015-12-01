@@ -1,5 +1,6 @@
 #include "rfpr.h"
 #include "rfhw.h"
+#include "rfapp.h"
 #include <stdint.h>
 #include <string.h>
 
@@ -68,6 +69,10 @@ namespace rf {
 		}
 	}
 	
+	void pr_initRF() {
+		rf::hw_init((uint8_t)GROUP); // Initializing the RF module
+	}
+
 	bool pr_send(connectRequest input) {
 		uint8_t bytearray[3];
 		getByteArrayForConnectRequest(input, bytearray);
