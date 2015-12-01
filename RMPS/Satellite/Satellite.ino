@@ -21,9 +21,9 @@ void adcSetup();
 int registerToBase();
 
 void setup() {
-	adcSetup();
-  pinMode(2, OUTPUT);
-  rf::pr_initRF();
+    adcSetup();
+	pinMode(2, OUTPUT);
+    rf::pr_initRF();
   
 	while (myVID == -1) // TODO We should implement a timeout - good practice in RTS
 		myVID = registerToBase(); // Waiting for the base to acknowledge us, granting a VID
@@ -68,7 +68,7 @@ int registerToBase(){
 	return newVID;
 }
 
-// function that sets up the registers to be able to use the ports as Analog input.
+// Function that sets up the registers to be able to use the ports as Analog input.
 void adcSetup() {
 	// PRR - Power Reduction register
 	PRR = 0x00;
@@ -94,10 +94,10 @@ void adcSetup() {
 	//DIDR0 |= 1 << 1;
 }
 
-// function that reads input from strain gauge.
+// Function that reads input from strain gauge.
 int getSample() {
-  // power Strain gauge sircuit
-  digitalWrite(2, LOW);
+    // Power Strain gauge circuit
+    digitalWrite(2, LOW);
   
 	// do single conversion
 	ADCSRA |= ((1 << ADSC) | (1 << ADIF));
@@ -110,8 +110,8 @@ int getSample() {
 	//get the first 2 lsb from ADCH and ADCL and return them as int
 	int value = (ADCL | ((ADCH & 0x03) << 8));
   
-  // cut power from strain gauge sircuit
-  digitalWrite(2, HIGH);
+    // Cut power from strain gauge circuit
+    digitalWrite(2, HIGH);
 
 	return value;
 }
