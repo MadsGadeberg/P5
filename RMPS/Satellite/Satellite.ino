@@ -56,6 +56,8 @@ int registerToBase()
 
 	rf::pr_send_connectRequest((uint16_t)RID);
 
+	delayMicroseconds(3); // Need to wait for other device's RF module
+
 	rf::packetTypes type = rf::pr_receive(data);
 	if (type == rf::CONNECTED_CONFIRMATION)
 	{
