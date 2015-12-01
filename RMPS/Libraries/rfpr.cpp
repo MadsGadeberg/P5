@@ -6,6 +6,7 @@
 namespace rf {
 	uint8_t crc8_update(uint8_t input, uint8_t lastCrc);
 
+	// sfix
 	void getByteArrayForConnectRequest(struct connectRequest data, uint8_t* bytearray) {
 		bytearray[0] = ((uint8_t)(1 << 4));
 		bytearray[1] = (uint8_t)(data.RID >> 8);
@@ -18,6 +19,7 @@ namespace rf {
 		bytearray[0] |= ((uint8_t)(crc & 0xf));
 	}
 
+	// sfix kommentar
 	void getByteArrayForConnectConfirmation(struct connectedConfirmation data, uint8_t* bytearray) {
 		bytearray[0] = ((uint8_t)(2 << 4)) | ((uint8_t)(data.VID & 0xf));
 		bytearray[1] = ((uint8_t)(data.RID >> 8));
@@ -30,6 +32,7 @@ namespace rf {
 		bytearray[3] = ((uint8_t)(crc));
 	}
 
+	// sfix denne kommentar
 	void getByteArrayForPing(struct ping data, uint8_t* bytearray) {
 		bytearray[0] = ((uint8_t)(3 << 4)) | ((uint8_t)(data.VID & 0xf));
 		
@@ -40,6 +43,7 @@ namespace rf {
 		bytearray[1] = ((uint8_t)(crc));
 	}
 
+	// sfix denne kommentar
 	void getByteArrayForsampleDataPacket(struct sampleDataPacket data, uint8_t* bytearray) {
 		bytearray[0] = ((uint8_t)(4 << 4)) | 4;
 		
@@ -78,6 +82,7 @@ namespace rf {
 		return hw_send(bytearray, 3);
 	}
 	
+	// this method sends ping to sattelite, input is of type ping and containd Virtual ID of satellite
 	bool pr_send(ping input) {
 		uint8_t bytearray[2];
 		getByteArrayForPing(input, bytearray);
@@ -85,6 +90,7 @@ namespace rf {
 		return hw_send(bytearray, 3);
 	}
 	
+	// 
 	bool pr_send(sampleDataPacket input) {
 		uint8_t bytearray[21];
 		getByteArrayForsampleDataPacket(input, bytearray);
@@ -188,6 +194,7 @@ namespace rf {
 		return INVALID;
 	}
 	
+	// mfix
 	uint8_t crc8_update(uint8_t input, uint8_t lastCrc)
 	{
 		uint8_t crc = lastCrc;

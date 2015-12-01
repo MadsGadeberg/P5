@@ -25,7 +25,6 @@ namespace rf {
 		uint16_t value;
 	};
 
-
 	// this struct contains all samples on a ping sequence. Exacly like sampleDataPacket except that this data is verified if the fifferent samples have an error validating bit after transmitting. 
 	struct sampleDataPacketVerified {
 
