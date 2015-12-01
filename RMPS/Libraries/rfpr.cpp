@@ -40,7 +40,7 @@ namespace rf {
 		bytearray[1] = ((uint8_t)(crc));
 	}
 
-	void getByteArrayForDatasending(struct dataSending data, uint8_t* bytearray) {
+	void getByteArrayForsampleDataPacket(struct sampleDataPacket data, uint8_t* bytearray) {
 		bytearray[0] = ((uint8_t)(4 << 4)) | 4;
 		
 		memcpy(data.data, bytearray+1, 20 * sizeof(uint16_t));
@@ -85,9 +85,9 @@ namespace rf {
 		return hw_send(bytearray, 3);
 	}
 	
-	bool pr_send(dataSending input) {
+	bool pr_send(sampleDataPacket input) {
 		uint8_t bytearray[21];
-		getByteArrayForDatasending(input, bytearray);
+		getByteArrayForsampleDataPacket(input, bytearray);
 		
 		return hw_send(bytearray, 3);
 	}
@@ -111,10 +111,10 @@ namespace rf {
 		return pr_send(myPing);
 	}
 	
-	bool pr_send_dataSending(uint16_t data[]) {
-		struct dataSending mydataSending;
-		memcpy(data, mydataSending.data, 20 * sizeof(uint16_t));
-		return pr_send(mydataSending);
+	bool pr_send_sampleDataPacket(uint16_t data[]) {
+		struct sampleDataPacket mysampleDataPacket;
+		memcpy(data, mysampleDataPacket.data, 20 * sizeof(uint16_t));
+		return pr_send(mysampleDataPacket);
 	}
 	
 	packetTypes pr_receive(char* output){
@@ -174,12 +174,12 @@ namespace rf {
 				return PING;
 			}
 		}else if(data[0] >> 4 == 4){
-			struct dataRecieving dataRecieving;
+			struct sampleDataPacketVerified sampleDataPacketVerified;
 			
 			uint8_t* array = data + 1;
 			for (int i = 0; i < 20; i++) {
-				dataRecieving.data[i].value = array[i * 2] & 0x3 | array[i * 2 + 1];
-				dataRecieving.data[i].valid = (((array[i * 2] & 0x3) << 6) | array[i * 2 + 1] >> 2) == array[i*2] & 0xfc;
+				sampleDataPacketVerified.data[i].value = array[i * 2] & 0x3 | array[i * 2 + 1];
+				sampleDataPacketVerified.data[i].valid = (((array[i * 2] & 0x3) << 6) | array[i * 2 + 1] >> 2) == array[i*2] & 0xfc;
 			}
 			
 			return DATA;

@@ -42,7 +42,7 @@ void loop() {
 
 	if (pingReceived)
 	{
-		rf::pr_send_dataSending(sampleArray);
+		rf::pr_send_sampleDataPacket(sampleArray);
 		samplesCounter = 0;
 	}
 

@@ -34,7 +34,7 @@ void loop() {
 	rf::pr_send_ping((char)i);
 	pingSent = millis();
 
-	// Receive, check if DataSending packet. Do some stuff with that.
+	// Receive, check if sampleDataPacket packet. Do some stuff with that.
 
 	delay(WAIT_FOR_CONNECTS_TIME - (millis() - pingSent)); 
 	i++;
