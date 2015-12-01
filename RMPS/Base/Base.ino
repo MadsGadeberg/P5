@@ -33,7 +33,8 @@ void loop() {
 
 	rf::pr_send_ping((char)i);
 	pingSent = millis();
-	// Delay????
+	
+	delayMicroseconds(3); // Need to wait for other device's RF module
 
 	rf::packetTypes type = rf::pr_receive(data);
 	if (type == rf::DATA)
