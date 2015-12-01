@@ -21,8 +21,8 @@ void adcSetup();
 int registerToBase();
 
 void setup() {
-	adcSetup(); // Setting the correct ports of ADC
 	rf::hw_init((uint8_t)GROUP); // Initializing the RF module
+	adcSetup(); // Setting the correct ports of ADC
 	delay(RF_POWER_UP_TIME); // Waiting for the RF module to power up
 	while (myVID == -1)
 		myVID = registerToBase(); // Waiting for the base to acknowledge us, granting a VID

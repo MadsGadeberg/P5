@@ -8,6 +8,8 @@ using namespace rf;
 // Global variables
 int nextVID = 0;
 char data[20];
+int i = 0;
+unsigned long int pingSent = 0;
 uint16_t connectedSatellites[10];
 
 void setup() {
@@ -29,11 +31,11 @@ void loop() {
 		}
 	}
 
-	for (int i = 0; i < nextVID; i++)
-	{
-		rf::pr_send_ping((char)i);
-		delay(TIME_BETWEEN_PING / nextVID);
-	}
+	rf::pr_send_ping((char)i);
+	pingSent = millis();
 
 	// Receive, check if DataSending packet. Do some stuff with that.
+
+	delay(WAIT_FOR_CONNECTS_TIME - (millis() - pingSent));
+	i++;
 }
