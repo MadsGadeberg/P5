@@ -11,7 +11,7 @@
 int myVID = -1; // Not allocated
 int samplesCounter = 0; // The current nr of the current samples
 uint16_t sampleArray[SAMPLE_ARRAY_SIZE]; // The data being sent to the base
-unsigned long int lastSleepTime = 0; // the time of last sleep. Needed because we want to sleep between each ping to save battery
+unsigned long int lastSleepTime = 0; // The time of last sleep. Needed because we want to sleep between each ping to save battery
 bool pingReceived = false;
 char data[20];
 
