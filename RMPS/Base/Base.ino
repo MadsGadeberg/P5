@@ -45,6 +45,8 @@ void loop() {
 
 	delay(TIME_BETWEEN_PING - (millis() - pingSent));
 	satelliteNumber++;
+
+	satelliteNumber = (satelliteNumber + 1) % nextVID;
 }
 
 void registerSatellite()
