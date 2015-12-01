@@ -129,9 +129,6 @@ namespace rf {
 			myConnectRequest.RID = data[1];
 			myConnectRequest.RID = myConnectRequest.RID << 8 | data[2];
 			
-			//((uint16_t)data[1]) << 8 | data[2];
-			
-			
 			uint8_t crc = 0;
 			for (int i = 0; i < 3; i++) {
 				uint8_t d = data[i];
