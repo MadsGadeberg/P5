@@ -12,7 +12,7 @@ int myVID = -1; // Not allocated
 int samplesCounter = 0; // The current nr of the current samples
 uint16_t sampleArray[SAMPLE_ARRAY_SIZE]; // The data being sent to the base
 unsigned long int lastSleep = 0; // The time of last sleep. Needed because we want to sleep between each ping to save battery
-bool pingReceived;
+bool pingReceived = false;
 char data[20];
 
 // Prototypes
@@ -24,7 +24,7 @@ void setup() {
 	adcSetup();
     rf::pr_initRF();
   
-	while (myVID == -1)
+	while (myVID == -1) // TODO We should implement a timeout - good practice in RTS
 		myVID = registerToBase(); // Waiting for the base to acknowledge us, granting a VID
 }
 
@@ -61,7 +61,7 @@ int registerToBase(){
 	{
 		struct rf::connectedConfirmation *confirmation;
 		confirmation = (rf::connectedConfirmation*)data;
-		newVID = (confirmation->VID);
+		newVID = confirmation->VID;
 	}
 
 	return newVID;
