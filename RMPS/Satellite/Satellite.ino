@@ -37,8 +37,7 @@ void loop() {
 		if (type == rf::PING && ((rf::ping*)data)->VID == myVID)
 		{
 			pingReceived = true;
-			// Let the RF module sleep
-			lastSleepTime = millis();
+			lastSleepTime = millis(); // The RF module automatically sleeps after pr_receive()
 		}
 	}
 
