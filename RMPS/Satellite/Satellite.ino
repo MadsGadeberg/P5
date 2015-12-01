@@ -4,14 +4,14 @@
 #include <Arduino.h>
 
 // Constants
-#define RID 1
+#define RID 1 // A unique ID for each satellite unit
 #define WAIT_TIME_FOR_ADC 3
 
 // Global variables
 int myVID = -1; // Not allocated
 int samplesCounter = 0; // The current nr of the current samples
 uint16_t sampleArray[SAMPLE_ARRAY_SIZE]; // The data being sent to the base
-unsigned long int lastSleep = 0; // the time of last sleep.
+unsigned long int lastSleep = 0; // The time of last sleep. Needed because we want to sleep between each ping to save battery
 bool pingReceived;
 char data[20];
 
@@ -29,14 +29,14 @@ void setup() {
 }
 
 void loop() {
-	if (millis() - lastSleep > TIME_BETWEEN_PING) // TODO Need a threshold
+	if (millis() - lastSleep > TIME_BETWEEN_PING) // TODO Need a threshold, depends on drifting
 	{
 		rf::packetTypes type = rf::pr_receive(data);
+		// TODO Possible delay because we're just waking up????
 		if (type == rf::PING && ((rf::ping*)data)->VID == myVID)
 		{
 			pingReceived = true;
-			// Let the RF module sleep
-			lastSleep = millis();
+			lastSleep = millis(); // Sleeps automatically when pr_receive() is done
 		}
 	}
 
