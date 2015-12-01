@@ -36,6 +36,6 @@ void loop() {
 
 	// Receive, check if sampleDataPacket packet. Do some stuff with that.
 
-	delay(WAIT_FOR_CONNECTS_TIME - (millis() - pingSent));
+	delay(WAIT_FOR_CONNECTS_TIME - (millis() - pingSent)); 
 	i++;
 }
