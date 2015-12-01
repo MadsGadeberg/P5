@@ -33,7 +33,7 @@ void loop() {
 
 	rf::pr_send_ping((char)i);
 	pingSent = millis();
-	// Delay?????
+	// Delay????
 
 	rf::packetTypes type = rf::pr_receive(data);
 	if (type == rf::DATA)
