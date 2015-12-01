@@ -2,7 +2,6 @@
 #include "rfhw.h"
 #include <stdint.h>
 #include <string.h>
-#include <Arduino.h>
 
 namespace rf {
 	uint8_t crc8_update(uint8_t input, uint8_t lastCrc);
