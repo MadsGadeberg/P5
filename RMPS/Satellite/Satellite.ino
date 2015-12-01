@@ -11,7 +11,7 @@
 int myVID = -1; // Not allocated
 int samplesCounter = 0; // The current nr of the current samples
 uint16_t sampleArray[SAMPLE_ARRAY_SIZE]; // The data being sent to the base
-unsigned long int lastSleep = 0; // the time of last sleep.
+unsigned long int lastSleepTime = 0; // the time of last sleep.
 bool pingReceived;
 char data[20];
 
@@ -22,6 +22,7 @@ int registerToBase();
 
 void setup() {
 	adcSetup();
+  pinMode(2, OUTPUT);
   rf::pr_initRF();
   
 	while (myVID == -1)
@@ -29,14 +30,14 @@ void setup() {
 }
 
 void loop() {
-	if (millis() - lastSleep > TIME_BETWEEN_PING) // TODO Need a threshold
+	if (millis() - lastSleepTime > TIME_BETWEEN_PING) // TODO Need a threshold
 	{
 		rf::packetTypes type = rf::pr_receive(data);
 		if (type == rf::PING && ((rf::ping*)data)->VID == myVID)
 		{
 			pingReceived = true;
 			// Let the RF module sleep
-			lastSleep = millis();
+			lastSleepTime = millis();
 		}
 	}
 
@@ -78,9 +79,9 @@ void adcSetup() {
 	// ADMUX - ADC Multiplexer Selection Register
 	ADMUX = (1 << MUX3); // Sets ADC0 as neg and ADC1 as pos input with a gain of 1
 
-						 // ADCSRA - ADC Control and Status Register A
-						 // ADEN enables adc
-						 // ADPS 0:2 Controls the input clock to the adc
+	// ADCSRA - ADC Control and Status Register A
+	// ADEN enables adc
+	// ADPS 0:2 Controls the input clock to the adc
 	ADCSRA = (1 << ADEN) | (1 << ADPS0) | (1 << ADPS1) | (1 << ADPS2);
 
 	// ADCSRB - ADC Control and Status Register B
@@ -95,6 +96,9 @@ void adcSetup() {
 
 // function that reads input from strain gauge.
 int getSample() {
+  // power Strain gauge sircuit
+  digitalWrite(2, LOW);
+  
 	// do single conversion
 	ADCSRA |= ((1 << ADSC) | (1 << ADIF));
 
@@ -105,5 +109,9 @@ int getSample() {
 	//Return the data
 	//get the first 2 lsb from ADCH and ADCL and return them as int
 	int value = (ADCL | ((ADCH & 0x03) << 8));
+  
+  // cut power from strain gauge sircuit
+  digitalWrite(2, HIGH);
+
 	return value;
 }
