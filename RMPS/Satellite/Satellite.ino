@@ -24,7 +24,7 @@ int registerToBase();
 void setup() {
     adcSetup();
 	pinMode(2, OUTPUT);
-    rf::pr_initRF();
+	rf::hw_init((uint8_t)GROUP); // Initializing the RF module
   
 	while (myVID == -1)
 		myVID = registerToBase(); // Waiting for the base to acknowledge us, granting a VID
@@ -34,7 +34,7 @@ void loop() {
 	if (millis() - lastSleepTime > TIME_BETWEEN_PING) // TODO Need a threshold
 	{
 		rf::packetTypes type = rf::pr_receive(data);
-		if (type == rf::PING && ((rf::ping*)data)->VID == myVID)
+		if (type == rf::PING && ((rf::Ping*)data)->VID == myVID)
 		{
 			pingReceived = true;
 			lastSleepTime = millis(); // The RF module automatically sleeps after pr_receive()
@@ -43,7 +43,7 @@ void loop() {
 
 	if (pingReceived)
 	{
-		rf::pr_send_sampleDataPacket(sampleArray);
+		rf::pr_send_samplePacket(sampleArray);
 		samplesCounter = 0;
 	}
 
@@ -60,8 +60,8 @@ int registerToBase(){
 	rf::packetTypes type = rf::pr_receive(data);
 	if (type == rf::CONNECTED_CONFIRMATION)
 	{
-		struct rf::connectedConfirmation *confirmation;
-		confirmation = (rf::connectedConfirmation*)data;
+		struct rf::ConnectedConfirmation *confirmation;
+		confirmation = (rf::ConnectedConfirmation*)data;
 		newVID = (confirmation->VID);
 	}
 

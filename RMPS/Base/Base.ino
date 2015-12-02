@@ -46,8 +46,8 @@ void registerSatellite()
 	rf::packetTypes type = rf::pr_receive(data);
 	if (type == rf::CONNECT_REQUEST)
 	{
-		struct rf::connectRequest *request;
-		request = (rf::connectRequest*)data;
+		struct rf::ConnectRequest *request;
+		request = (rf::ConnectRequest*)data;
 		uint16_t satelliteRID = (request->RID);
 
 		rf::pr_send_connectedConfirmation(satelliteRID, nextVID++);
@@ -55,7 +55,7 @@ void registerSatellite()
 }
 
 void getDataFromSatellite() {
-	rf::samplePacketVerified samplePacket[8];
+	rf::SamplePacketVerified samplePacket[8];
 
 	//get sampleDataPacket from all connected satellites
 	for (int i = 0; nextVID < i; i++) {
@@ -67,13 +67,13 @@ void getDataFromSatellite() {
 		delayMicroseconds(3);
 
 		// get data
-		struct rf::samplePacket *dataPacket;
+		struct rf::SamplePacket *dataPacket;
 
 		// if datatype is data save it, else mark it as invalid
 		if (rf::pr_receive(data) == rf::DATA)
-			dataPacket = (rf::samplePacket*)data;
+			dataPacket = (rf::SamplePacket*)data;
 		else
-			samplePacket[i].sampleData.valid = false;
+			samplePacket[i].data->valid = false;
 	}
 
 	// count up sat number
