@@ -68,10 +68,6 @@ namespace rf {
 			array[i] |= array[i] << 6 | ((array[i + 1] >> 2) & (0xf << 2));
 		}
 	}
-	
-	void pr_initRF() {
-		rf::hw_init((uint8_t)GROUP); // Initializing the RF module
-	}
 
 	bool pr_send(connectRequest input) {
 		uint8_t bytearray[3];

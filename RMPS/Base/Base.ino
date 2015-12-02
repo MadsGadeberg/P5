@@ -22,7 +22,7 @@ void registerSatellite();
 void getDataFromSatellite();
 
 void setup() {
-	rf::pr_initRF(); // Initializing the RF module
+	rf::hw_init((uint8_t)GROUP) // Initializing the RF module
 
 	pinMode(RUNPIN, INPUT);
 	pinMode(LISTENPIN, INPUT);
