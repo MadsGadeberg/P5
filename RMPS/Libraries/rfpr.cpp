@@ -1,5 +1,5 @@
-#include <rfpr.h>
-#include <rfhw.h>
+#include "rfpr.h"
+#include "rfhw.h"
 #include <stdint.h>
 #include <string.h>
 
@@ -26,7 +26,7 @@ namespace rf {
 	}
 
 	// Get a byte array for struct connectedConfirmation
-	void getByteArrayForConnectConfirmation(struct ConnectedConfirmation data, uint8_t* bytearray) {
+	void getByteArrayForConnectConfirmation(ConnectedConfirmation data, uint8_t* bytearray) {
 		// The most significant bits of index 0 contains the packet type
 		bytearray[0] = ((uint8_t)(2 << 4));
 		
