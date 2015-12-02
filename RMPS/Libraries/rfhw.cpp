@@ -52,7 +52,7 @@
 
 namespace rf {
 	volatile uint8_t hw_state = STATE_IDLE;
-	volatile uint8_t hw_buffer[MAX_LEN];
+	uint8_t hw_buffer[MAX_LEN];
 	volatile uint8_t hw_buffer_index = 0;
 	volatile uint8_t hw_buffer_len = 0;
 	
@@ -225,10 +225,10 @@ namespace rf {
 				// state is 0 indexed
 				// hw_buffer_len is 1 indexed
 				out = hw_buffer[state];
-			} else if (state == STATE_TX_PRE0 || state == STATE_TX_PRE1 || state == STATE_TX_PRE2) {
+			} else if (state == hw_buffer_len || state == STATE_TX_PRE0 || state == STATE_TX_PRE1 || state == STATE_TX_PRE2) {
 				out = 0xAA;
 			} else {
-				out = 0xBB;
+				out = 0xAA;
 			
 				// Sleep RF module
 				hw_setStateSleep();				
@@ -286,7 +286,15 @@ namespace rf {
 		hw_sendCMD(0x8201);
 	}
 	
-	inline bool hw_send(uint8_t byte) {
+	bool hw_sendWait(const uint8_t buffer[], uint8_t len) {
+		if(hw_send(buffer, len) == false)
+			return false;
+			
+		while (hw_state != STATE_IDLE);
+		return true;
+	}
+	
+	bool hw_send(uint8_t byte) {
 		uint8_t data[] = { byte };
 		return hw_send(data, 1);
 	}
@@ -330,7 +338,7 @@ namespace rf {
 		return hw_state == STATE_IDLE;
 	}
 	
-	volatile uint8_t* hw_recieve(uint8_t* length) {
+	uint8_t* hw_recieve(uint8_t* length) {
 		if (hw_state == STATE_RX && hw_buffer_index >= hw_buffer_len && hw_buffer_index != 0) {
 			hw_state = STATE_IDLE;
 			
