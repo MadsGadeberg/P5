@@ -11,8 +11,9 @@
 int myVID = -1; // a Virtual ID that gets assigned from the base when connected to it.
 int samplesCounter = 0; // The current nr of samples
 uint16_t sampleArray[SAMPLE_ARRAY_SIZE]; // The data being sent to the base
-unsigned long int lastSleepTime = 0; // the time of last sleep.
-bool pingReceived;
+
+unsigned long int lastSleepTime = 0; // The time of last sleep. Needed because we want to sleep between each ping to save battery
+bool pingReceived = false;
 char data[20];
 
 // Prototypes
@@ -21,9 +22,9 @@ void adcSetup();
 int registerToBase();
 
 void setup() {
-	adcSetup();
-  pinMode(2, OUTPUT);
-  rf::pr_initRF();
+    adcSetup();
+	pinMode(2, OUTPUT);
+    rf::pr_initRF();
   
 	while (myVID == -1)
 		myVID = registerToBase(); // Waiting for the base to acknowledge us, granting a VID
@@ -36,8 +37,7 @@ void loop() {
 		if (type == rf::PING && ((rf::ping*)data)->VID == myVID)
 		{
 			pingReceived = true;
-			// Let the RF module sleep
-			lastSleepTime = millis();
+			lastSleepTime = millis(); // The RF module automatically sleeps after pr_receive()
 		}
 	}
 
@@ -68,7 +68,7 @@ int registerToBase(){
 	return newVID;
 }
 
-// function that sets up the registers to be able to use the ports as Analog input.
+// Function that sets up the registers to be able to use the ports as Analog input.
 void adcSetup() {
 	// PRR - Power Reduction register
 	PRR = 0x00;
@@ -94,11 +94,10 @@ void adcSetup() {
 	//DIDR0 |= 1 << 1;
 }
 
-// function that reads input from strain gauge.
+// Function that reads input from strain gauge.
 int getSample() {
-
-	// power Strain gauge sircuit
-	digitalWrite(2, LOW);
+    // Power Strain gauge circuit
+    digitalWrite(2, LOW);
   
 	// do single conversion
 	ADCSRA |= ((1 << ADSC) | (1 << ADIF));
@@ -111,8 +110,8 @@ int getSample() {
 	//get the first 2 lsb from ADCH and ADCL and return them as int
 	int value = (ADCL | ((ADCH & 0x03) << 8));
   
-	// cut power from strain gauge sircuit
-	digitalWrite(2, HIGH);
+    // Cut power from strain gauge circuit
+    digitalWrite(2, HIGH);
 
 	return value;
 }
