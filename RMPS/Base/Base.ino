@@ -6,11 +6,11 @@
 #define RUNPIN 0
 #define LISTENPIN 1
 
-// system states
-enum SystemState{ LISTENINGFORSATS, RUNMODE, STANDBY};
+// Enums
+typedef enum SystemStates { LISTENINGFORSATS, RUNMODE, STANDBY } SystemStates;
 
 // Global variables
-int systemState = STANDBY;	// 
+SystemStates systemState = STANDBY;	// 
 int nextVID = 0; // This value also shows how many connected satellites we have
 char data[20];
 int satelliteNumber = 0;
@@ -35,9 +35,9 @@ void loop() {
 		getDataFromSats();
 
 	// check for state change
-	if (digitalRead(RUNPIN))		// Run bnt
+	if (digitalRead(RUNPIN))			// Run button
 		systemState = LISTENINGFORSATS;
-	else if (digitalRead(LISTENPIN))	// Listen for sats
+	else if (digitalRead(LISTENPIN))	// Listen for satellites
 		systemState = RUNMODE;
 }
 
@@ -76,7 +76,6 @@ void getDataFromSats() {
 			samplePacket[i].sampleData.valid = false;
 	}
 
-	
 	// count up sat number
 	satelliteNumber = (satelliteNumber + 1) % nextVID;
 }
