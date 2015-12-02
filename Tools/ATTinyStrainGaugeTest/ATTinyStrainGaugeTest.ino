@@ -1,4 +1,5 @@
 #include <rfhw.h>
+#include <rfpr.h>
 #include "Arduino.h"
 
 #define PIN_STRAIN 10
@@ -24,9 +25,32 @@ void loop() {
         case 'g':
           getData(data[1], (((uint16_t)data[2]) << 8) | (uint16_t)  data[3]);
           break;
+        case 'p':
+          switch (data[1]) {
+            case 'r':
+              while (!rf::pr_send_connectRequest(50));
+              break;
+            case 'c':
+              while (!rf::pr_send_connectedConfirmation('a', 0x4));
+              break;
+            case 'p':
+              while (!rf::pr_send_ping(0x4));
+              break;
+            case 's':
+              uint16_t data[20];
+              for (int i = 0; i < 20; i++) {
+                data[i] = i;
+              }
+              while (!rf::pr_send_samplePacket(data));
+              break;
+          }
+          break;
         default:
           while (!rf::hw_send(data, len));
       }
+    }
+    else {
+      while (!rf::hw_send(data, len));
     }
   }
 }

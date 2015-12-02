@@ -1,9 +1,11 @@
 #include <rfhw.h>
+#include <rfpr.h>
 #include "Arduino.h"
 
 int state = 0;
 uint8_t args[4];
 
+char output[50];
 char currentSerialRead[20];
 int currentSerialReadIndex = -1;
 
@@ -27,6 +29,57 @@ void loop() {
         Serial.print((char) rdata[i]);
       }
       Serial.println();
+      Serial.println();
+      Serial.println("Hex:");
+
+      for (int i = 0; i < len; i++) {
+        Serial.print(" 0x");
+        Serial.print(rdata[i], HEX);
+      }
+
+      Serial.println();
+
+      // Read from protocol layer
+      uint8_t len;
+      rf::PacketTypes ptype = rf::pr_receive(output, rdata, len);
+      if (ptype == rf::CONNECT_REQUEST) {
+        rf::ConnectRequest* request = (rf::ConnectRequest*)output;
+        
+        Serial.println();
+        Serial.println("Connect request");
+        Serial.print("RID ");
+        Serial.println(request->RID);
+      } else if (ptype == rf::CONNECTED_CONFIRMATION) {
+        rf::ConnectedConfirmation* request = (rf::ConnectedConfirmation*)output;
+        
+        Serial.println();
+        Serial.println("Connected confirmation");
+        Serial.print("VID ");
+        Serial.println(request->VID);
+        Serial.print("RID ");
+        Serial.println((char) request->RID);
+      } else if (ptype == rf::PING) {
+        rf::Ping* request = (rf::Ping*)output;
+        
+        Serial.println();
+        Serial.println("Ping");
+        Serial.print("VID ");
+        Serial.println(request->VID);
+      } else if (ptype == rf::DATA) {
+        rf::SamplePacketVerified* request = (rf::SamplePacketVerified*)output;
+        
+        Serial.println();
+        Serial.println("Data");
+        for (int i = 0; i < 20; i++) {
+          Serial.print("Nr ");
+          Serial.println(i + 1);
+          Serial.print("Valid ");
+          Serial.println(request->data[i].valid);
+          Serial.print("Data ");
+          Serial.println(request->data[i].value);
+          Serial.println();
+        }
+      }
   }
 
   switch (state) {
@@ -58,6 +111,8 @@ void loop() {
         state++;
       }
   }
+
+  if (state > 8) state = 0;
 }
 
 bool ReadSerial() {
@@ -85,9 +140,9 @@ bool ReadSerial() {
 uint8_t GetArg() {
   if (currentSerialReadIndex < 0) {
     return 0;
-  } else if (currentSerialRead[0] == 'c') {
+  } else if (currentSerialRead[0] == 'c' && currentSerialReadIndex > 1) {
     return currentSerialRead[2];
-  } else if (currentSerialRead[0] == 'd') {
+  } else if (currentSerialRead[0] == 'd' && currentSerialReadIndex > 1) {
     return atoi(currentSerialRead + 2);
   } else {
     return currentSerialRead[0];
