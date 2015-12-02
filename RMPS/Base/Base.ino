@@ -55,7 +55,7 @@ void registerSatellite()
 }
 
 void getDataFromSats() {
-	sampleDataPacketVerified samplePacket[8];
+	rf::samplePacketVerified samplePacket[8];
 
 	//get sampleDataPacket from all connected satellites
 	for (int i = 0; nextVID < i; i++) {
@@ -67,11 +67,11 @@ void getDataFromSats() {
 		delayMicroseconds(3);
 
 		// get data
-		struct rf::sampleDataPacket *dataPacket;
+		struct rf::samplePacket *dataPacket;
 
 		// if datatype is data save it, else mark it as invalid
 		if (rf::pr_receive(data) == rf::DATA)
-			dataPacket = (rf::sampleDataPacket*)data;
+			dataPacket = (rf::samplePacket*)data;
 		else
 			samplePacket[i].sampleData.valid = false;
 	}
