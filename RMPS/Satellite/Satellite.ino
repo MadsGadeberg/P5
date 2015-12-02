@@ -4,15 +4,15 @@
 #include <Arduino.h>
 
 // Constants
-#define RID 1 // A unique ID for each satellite unit
+#define RID 1
 #define WAIT_TIME_FOR_ADC 3
 
 // Global variables
-int myVID = -1; // Not allocated
-int samplesCounter = 0; // The current nr of the current samples
+int myVID = -1; // a Virtual ID that gets assigned from the base when connected to it.
+int samplesCounter = 0; // The current nr of samples
 uint16_t sampleArray[SAMPLE_ARRAY_SIZE]; // The data being sent to the base
-unsigned long int lastSleepTime = 0; // the time of last sleep. Needed because we want to sleep between each ping to save battery
-bool pingReceived = false;
+unsigned long int lastSleepTime = 0; // the time of last sleep.
+bool pingReceived;
 char data[20];
 
 // Prototypes
@@ -25,7 +25,7 @@ void setup() {
   pinMode(2, OUTPUT);
   rf::pr_initRF();
   
-	while (myVID == -1) // TODO We should implement a timeout - good practice in RTS
+	while (myVID == -1)
 		myVID = registerToBase(); // Waiting for the base to acknowledge us, granting a VID
 }
 
@@ -33,7 +33,6 @@ void loop() {
 	if (millis() - lastSleepTime > TIME_BETWEEN_PING) // TODO Need a threshold
 	{
 		rf::packetTypes type = rf::pr_receive(data);
-		// TODO Possible delay because we're just waking up????
 		if (type == rf::PING && ((rf::ping*)data)->VID == myVID)
 		{
 			pingReceived = true;
@@ -63,7 +62,7 @@ int registerToBase(){
 	{
 		struct rf::connectedConfirmation *confirmation;
 		confirmation = (rf::connectedConfirmation*)data;
-		newVID = confirmation->VID;
+		newVID = (confirmation->VID);
 	}
 
 	return newVID;
@@ -97,8 +96,9 @@ void adcSetup() {
 
 // function that reads input from strain gauge.
 int getSample() {
-  // power Strain gauge sircuit
-  digitalWrite(2, LOW);
+
+	// power Strain gauge sircuit
+	digitalWrite(2, LOW);
   
 	// do single conversion
 	ADCSRA |= ((1 << ADSC) | (1 << ADIF));
@@ -111,8 +111,8 @@ int getSample() {
 	//get the first 2 lsb from ADCH and ADCL and return them as int
 	int value = (ADCL | ((ADCH & 0x03) << 8));
   
-  // cut power from strain gauge sircuit
-  digitalWrite(2, HIGH);
+	// cut power from strain gauge sircuit
+	digitalWrite(2, HIGH);
 
 	return value;
 }

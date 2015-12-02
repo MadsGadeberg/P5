@@ -1,9 +1,16 @@
-#include "../Libraries/rfpr.h"
-#include "../Libraries/rfhw.h"
-#include "../Libraries/rfapp.h"
+#include "rfpr.h"
+#include "rfhw.h"
+#include "rfapp.h"
 #include <Arduino.h>
 
+#define RUNPIN 0
+#define LISTENPIN 1
+
+// system states
+enum SystemState{ LISTENINGFORSATS, RUNMODE, STANDBY};
+
 // Global variables
+int systemState = STANDBY;	// 
 int nextVID = 0; // This value also shows how many connected satellites we have
 char data[20];
 int satelliteNumber = 0;
@@ -12,39 +19,26 @@ uint16_t connectedSatellites[10];
 
 // Prototypes
 void registerSatellite();
+void getDataFromSats();
 
 void setup() {
-	rf::hw_init((uint8_t)GROUP); // Initializing the RF module
+	rf::pr_initRF(); // Initializing the RF module
+
+	pinMode(RUNPIN, INPUT);
+	pinMode(LISTENPIN, INPUT);
 }
 
 void loop() {
-	while (millis() < WAIT_FOR_CONNECTS_TIME) 
+	if (LISTENINGFORSATS)
 		registerSatellite(); // Letting satellites register for WAIT_FOR_CONNECTS_TIME ms
+	else if (RUNMODE)
+		getDataFromSats();
 
-	rf::pr_send_ping((char)satelliteNumber);
-	pingSent = millis();
-	
-	delayMicroseconds(3); // Need to wait for other device's RF module
-
-	rf::packetTypes type = rf::pr_receive(data);
-	if (type == rf::DATA)
-	{
-		struct rf::sampleDataPacket *request;
-		request = (rf::sampleDataPacket*)data;
-		auto data = (request->data);
-	}
-
-	for (int i = 0; i < SAMPLE_ARRAY_SIZE; i++)
-	{
-		Serial.print(satelliteNumber);
-		Serial.print(data[i]); // TODO Check for out of bounds
-		Serial.print(millis());
-	}
-
-	delay(TIME_BETWEEN_PING - (millis() - pingSent));
-	satelliteNumber++;
-
-	satelliteNumber = (satelliteNumber + 1) % nextVID;
+	// check for state change
+	if (digitalRead(RUNPIN))		// Run bnt
+		systemState = LISTENINGFORSATS;
+	else if (digitalRead(LISTENPIN))	// Listen for sats
+		systemState = RUNMODE;
 }
 
 void registerSatellite()
@@ -58,4 +52,31 @@ void registerSatellite()
 
 		rf::pr_send_connectedConfirmation(satelliteRID, nextVID++);
 	}
+}
+
+void getDataFromSats() {
+	sampleDataPacketVerified samplePacket[8];
+
+	//get sampleDataPacket from all connected satellites
+	for (int i = 0; nextVID < i; i++) {
+		// ping satellite
+		rf::pr_send_ping((char)satelliteNumber);
+		pingSent = millis();
+
+		// Need to wait for satellites RF module
+		delayMicroseconds(3);
+
+		// get data
+		struct rf::sampleDataPacket *dataPacket;
+
+		// if datatype is data save it, else mark it as invalid
+		if (rf::pr_receive(data) == rf::DATA)
+			dataPacket = (rf::sampleDataPacket*)data;
+		else
+			samplePacket[i].sampleData.valid = false;
+	}
+
+	
+	// count up sat number
+	satelliteNumber = (satelliteNumber + 1) % nextVID;
 }
