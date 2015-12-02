@@ -1,0 +1,84 @@
+#include <rfhw.h>
+#include "Arduino.h"
+
+#define SEND_PACKET 10
+#define RECIEVE_SIZE 85
+//#define WAIT 1
+
+uint8_t arraySend[SEND_PACKET];
+uint8_t arrayRecieve[RECIEVE_SIZE];
+uint32_t lastSendTime = 0;
+
+void setup() {
+  // Init array
+   for (int i = 0; i < SEND_PACKET; i++) {
+    arraySend[i] = 'a';
+  }  
+
+  // Init serial
+  Serial.begin(57600);
+
+  // Init RF module
+  rf::hw_init((uint8_t)20);
+
+  // Send data
+  SendData();
+}
+
+void loop() {
+  // Recieve data
+  uint8_t len = 0;
+  volatile uint8_t* rdata = rf::hw_recieve(&len);
+  if (rdata != NULL) {
+    if (len == RECIEVE_SIZE) {
+      uint32_t current = millis();
+      
+      int calculatedTime = current - lastSendTime;
+
+      #ifndef WAIT
+      Serial.println(calculatedTime);
+      #endif
+      SendData();
+    }
+  }
+
+    if (Serial.available() > 0) {
+
+      // read the incoming byte:
+      char incomingByte = Serial.read();
+
+      if (incomingByte == 's')
+        SendData();
+    }
+
+    if (millis() - lastSendTime > 200) {
+      Serial.println("r");
+      SendData();
+    }
+}
+
+void SendData() {
+  lastSendTime = millis();
+  delay(5);
+
+#ifdef WAIT
+  uint32_t start = millis();
+#endif
+
+#ifndef WAIT
+  if (!rf::hw_send(arraySend, SEND_PACKET))
+#else
+  if (!rf::hw_sendWait(arraySend, SEND_PACKET))
+#endif
+  {
+    Serial.println("NOT SEND");
+    return;
+  }
+
+#ifdef WAIT
+  uint32_t result = millis() - start;
+  Serial.println(result);
+#endif
+  
+  lastSendTime = millis();
+}
