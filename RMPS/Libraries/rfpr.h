@@ -1,51 +1,52 @@
 #include <stdint.h>
 
 namespace rf {
-	struct connectRequest {
+	struct ConnectRequest {
 		uint16_t RID;
 	};
 
-	struct connectedConfirmation {
-		char VID;
+	struct ConnectedConfirmation {
+		uint8_t VID;
 		uint16_t RID;
 	};
 
-	struct ping {
-		char VID;
+	struct Ping {
+		uint8_t VID;
 	};
 
 	// This struct contains the all samples in a ping sequence.
-	struct samplePacket {
-		uint16_t data[20];
+	struct SamplePacket {
+		uint16_t* data;
+		uint16_t len;
 	};
 
 	// struct that contains data about one sample and a bit that tels if the data is verified to be valid.
-	struct sample {
+	struct Sample {
 		bool valid;
 		uint16_t value;
 	};
 
 	// this struct contains all samples on a ping sequence. Exacly like samplePacket except that this data is verified if the fifferent samples have an error validating bit after transmitting. 
-	struct samplePacketVerified {
-		sample data[20];
+	struct SamplePacketVerified {
+		Sample data[20];
+		uint16_t len;
 	};
 
-	enum packetTypes {
+	enum PacketTypes {
 		CONNECT_REQUEST, CONNECTED_CONFIRMATION, PING, DATA, INVALID, NODATA
 	};
-	typedef enum packetTypes packetTypes;
-	
-	void pr_initRF();
+	typedef enum PacketTypes packetTypes;
 
-	bool pr_send(connectRequest input);
-	bool pr_send(connectedConfirmation input);
-	bool pr_send(ping input);
-	bool pr_send(samplePacket input);
+	bool pr_send(ConnectRequest input);
+	bool pr_send(ConnectedConfirmation input);
+	bool pr_send(Ping input);
+	bool pr_send(SamplePacket input);
 	
 	bool pr_send_connectRequest(uint16_t RID);
 	bool pr_send_connectedConfirmation(uint16_t RID, uint8_t VID);
 	bool pr_send_ping(char VID);
 	bool pr_send_samplePacket(uint16_t data[]);
 	
-	packetTypes pr_receive(char* output);
+	PacketTypes pr_receive(char* output);
+	PacketTypes pr_receive(char* output, uint8_t* data, uint8_t len);
 }
