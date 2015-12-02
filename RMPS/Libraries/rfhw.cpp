@@ -47,14 +47,13 @@
 #define STATE_IDLE 		0xf8
 #define STATE_RX 		0xf9
 
-// Filter
-#define FILTER    20
-
 namespace rf {
 	volatile uint8_t hw_state = STATE_IDLE;
 	uint8_t hw_buffer[MAX_LEN];
 	volatile uint8_t hw_buffer_index = 0;
 	volatile uint8_t hw_buffer_len = 0;
+	
+	uint8_t hw_filter;
 	
 	static void hw_interrupt();
 	void hw_enableRF();
@@ -108,6 +107,9 @@ namespace rf {
 	
 	// Identifier handled in protocol
 	void hw_init(uint8_t byte_filter) {
+		// Set filter
+		hw_filter = byte_filter;
+	
 		// Init SPI
 		hw_initSPI();
     
@@ -162,7 +164,7 @@ namespace rf {
     
     	// Synchron pattern Command - Reprograms byte 0
     	// Byte 0: 0xFF
-    	hw_sendCMD(0xCE00 | FILTER); // SYNC=2DXX；
+    	hw_sendCMD(0xCE00 | hw_filter); // SYNC=2DXX；
         
     	// AFC Command
     	hw_sendCMD(0xC483); // @PWR,NO RSTRIC,!st,!fi,OE,EN
@@ -218,7 +220,7 @@ namespace rf {
 			if (state == STATE_TX_BYTE0) {
 				out = 0x2D;
 			} else if (state == STATE_TX_FILTER) {
-				out = FILTER;
+				out = hw_filter;
 			} else if (state == STATE_TX_LEN) {
 				out = hw_buffer_len;
 			} else if (state < hw_buffer_len) {
