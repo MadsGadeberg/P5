@@ -10,7 +10,7 @@
 typedef enum SystemStates { LISTENINGFORSATS, RUNMODE, STANDBY } SystemStates;
 
 // Global variables
-SystemStates systemState = STANDBY;	// 
+SystemStates systemState = STANDBY;
 int nextVID = 0; // This value also shows how many connected satellites we have
 char data[20];
 int satelliteNumber = 0;
