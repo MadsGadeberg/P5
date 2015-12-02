@@ -19,7 +19,7 @@ uint16_t connectedSatellites[10];
 
 // Prototypes
 void registerSatellite();
-void getDataFromSats();
+void getDataFromSatellite();
 
 void setup() {
 	rf::pr_initRF(); // Initializing the RF module
@@ -32,7 +32,7 @@ void loop() {
 	if (LISTENINGFORSATS)
 		registerSatellite(); // Letting satellites register for WAIT_FOR_CONNECTS_TIME ms
 	else if (RUNMODE)
-		getDataFromSats();
+		getDataFromSatellite();
 
 	// check for state change
 	if (digitalRead(RUNPIN))			// Run button
@@ -54,7 +54,7 @@ void registerSatellite()
 	}
 }
 
-void getDataFromSats() {
+void getDataFromSatellite() {
 	rf::samplePacketVerified samplePacket[8];
 
 	//get sampleDataPacket from all connected satellites
