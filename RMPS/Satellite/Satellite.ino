@@ -14,7 +14,7 @@ uint16_t sampleArray[SAMPLE_ARRAY_SIZE]; // The data being sent to the base
 
 unsigned long int lastSleepTime = 0; // The time of last sleep. Needed because we want to sleep between each ping to save battery
 bool pingReceived = false;
-char data[20];
+char data[SAMPLE_ARRAY_SIZE];
 
 // Prototypes
 int getSample();

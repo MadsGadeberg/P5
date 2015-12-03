@@ -12,7 +12,7 @@ typedef enum SystemStates { LISTENINGFORSATS, RUNMODE, STANDBY } SystemStates;
 // Global variables
 SystemStates systemState = STANDBY;
 int nextVID = 0; // This value also shows how many connected satellites we have
-char data[20];
+char data[SAMPLE_ARRAY_SIZE];
 int satelliteNumber = 0;
 unsigned long int pingSent = 0;
 uint16_t connectedSatellites[10];
