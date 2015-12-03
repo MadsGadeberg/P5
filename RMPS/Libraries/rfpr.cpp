@@ -1,5 +1,6 @@
 #include "rfpr.h"
 #include "rfhw.h"
+#include "rfapp.h"
 #include <stdint.h>
 #include <string.h>
 
@@ -70,12 +71,12 @@ namespace rf {
 		uint8_t* array = bytearray + 1;
 		
 		// Copy data from samplePacket + 1 because we need to start at index 1 course index 0 is used for packet type
-		for (int i = 0; i < 20; i++) {
+		for (int i = 0; i < SAMPLE_ARRAY_SIZE; i++) {
 			array[i * 2] = (data.data[i] >> 8);
 			array[i * 2 + 1] = (data.data[i]);
 		}
 		
-		for (int i = 0; i < 20; i++) {			
+		for (int i = 0; i < SAMPLE_ARRAY_SIZE; i++) {
 			// crc replaced by dublicated data
 			// This means that the error will be max the 4 least significant bits with is an error of max 15 (all 4 bits switched from 0 to 1).
 			// The error is within the accetable margin
@@ -246,7 +247,7 @@ namespace rf {
 			struct SamplePacketVerified samplePacketVerified;
 			
 			uint8_t* array = data + 1;
-			for (int i = 0; i < 20; i++) {
+			for (int i = 0; i < SAMPLE_ARRAY_SIZE; i++) {
 				// Sets 2 most significant to the 2 most significant bits of the 10 bit data
 				uint8_t check = (array[i * 2] << 6);
 			

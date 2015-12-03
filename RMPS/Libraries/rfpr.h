@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include "rfapp.h"
 
 namespace rf {
 	struct ConnectRequest {
@@ -17,7 +18,6 @@ namespace rf {
 	// This struct contains the all samples in a ping sequence.
 	struct SamplePacket {
 		uint16_t* data;
-		uint16_t len;
 	};
 
 	// struct that contains data about one sample and a bit that tels if the data is verified to be valid.
@@ -28,8 +28,7 @@ namespace rf {
 
 	// this struct contains all samples on a ping sequence. Exacly like samplePacket except that this data is verified if the fifferent samples have an error validating bit after transmitting. 
 	struct SamplePacketVerified {
-		Sample data[20];
-		uint16_t len;
+		Sample data[SAMPLE_ARRAY_SIZE];
 	};
 
 	enum PacketTypes {
