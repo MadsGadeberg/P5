@@ -5,6 +5,7 @@
 
 #define RUNPIN 0
 #define LISTENPIN 1
+#define MAX_CONNECTED_SATELLITES 10
 
 // Enums
 typedef enum SystemStates { LISTENINGFORSATS, RUNMODE, STANDBY } SystemStates;
@@ -15,7 +16,7 @@ int nextVID = 0; // This value also shows how many connected satellites we have
 char data[SAMPLE_ARRAY_SIZE];
 int satelliteNumber = 0;
 unsigned long int pingSent = 0;
-uint16_t connectedSatellites[10];
+uint16_t connectedSatellites[MAX_CONNECTED_SATELLITES];
 
 // Prototypes
 void registerSatellite();
