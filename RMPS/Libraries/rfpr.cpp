@@ -74,9 +74,7 @@ namespace rf {
 		for (int i = 0; i < SAMPLE_ARRAY_SIZE; i++) {
 			array[i * 2] = (data.data[i] >> 8);
 			array[i * 2 + 1] = (data.data[i]);
-		}
 		
-		for (int i = 0; i < SAMPLE_ARRAY_SIZE; i++) {
 			// crc replaced by dublicated data
 			// This means that the error will be max the 4 least significant bits with is an error of max 15 (all 4 bits switched from 0 to 1).
 			// The error is within the accetable margin
