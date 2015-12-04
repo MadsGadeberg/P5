@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE nta PUBLIC '-//Uppaal Team//DTD Flat System 1.1//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_2.dtd'>
 <nta>
-	<declaration>const int 	N = 2;         // Number of satellites
+	<declaration>const int 	N = 5;         // Number of satellites
 typedef scalar[N] id_t;
 
 chan ping[id_t];
@@ -164,9 +164,9 @@ clock SAMPLE_CLOCK;</declaration>
 		<transition>
 			<source ref="id10"/>
 			<target ref="id7"/>
-			<label kind="guard" x="-442" y="-76">SAMPLE_CLOCK &gt;= 
+			<label kind="guard" x="-459" y="-76">SAMPLE_CLOCK &gt;= 
 SAMPLE_FREQUENCY</label>
-			<label kind="assignment" x="-442" y="-42">SAMPLE_CLOCK = 0</label>
+			<label kind="assignment" x="-459" y="-42">SAMPLE_CLOCK = 0</label>
 			<nail x="-297" y="-51"/>
 		</transition>
 		<transition>
