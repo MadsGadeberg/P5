@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE nta PUBLIC '-//Uppaal Team//DTD Flat System 1.1//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_2.dtd'>
+<nta>
+	<declaration>// ALL times are in microseconds. 1 ms = 1000 microseconds
+
+const int 	N = 4;         // Number of satellites - REMEMBER to change system declarations
+typedef int[0,N-1] id_t;
+clock time;
+
+chan ping[N], data[N];
+
+const int Frequency   = 100000;            // We need data every x ms
+const int Period      = 5000;              // Periode for reading from sensor
+const int SendCost    = 20000;             // Computation Times for Sending via RF
+const int ReadCost    = 2;                 // Time it takes to read from sensor
+const int Deadline    = (Frequency / N);   // Deadlines</declaration>
+	<template>
+		<name>Satellite</name>
+		<parameter>const id_t id</parameter>
+		<declaration>clock c, t, t_read;</declaration>
+		<location id="id0" x="-935" y="-161" color="#00ff00">
+			<name x="-1003" y="-169">Sending</name>
+			<label kind="invariant" x="-994" y="-144">c &lt;= SendCost</label>
+		</location>
+		<location id="id1" x="-552" y="-170" color="#ffff00">
+			<name x="-535" y="-178">Reading_Send</name>
+			<label kind="invariant" x="-560" y="-152">t_read &lt; ReadCost</label>
+		</location>
+		<location id="id2" x="-782" y="-161" color="#00ffff">
+			<name x="-832" y="-144">ReadySend</name>
+			<label kind="invariant" x="-807" y="-127">t &lt; Period</label>
+		</location>
+		<location id="id3" x="-552" y="-323" color="#0000ff">
+			<name x="-536" y="-340">Reading</name>
+			<label kind="invariant" x="-535" y="-322">t_read &lt; ReadCost</label>
+		</location>
+		<location id="id4" x="-782" y="-314" color="#ffa500">
+			<name x="-792" y="-348">Idle</name>
+			<label kind="invariant" x="-773" y="-305">t &lt; Period</label>
+		</location>
+		<init ref="id4"/>
+		<transition>
+			<source ref="id1"/>
+			<target ref="id2"/>
+			<nail x="-731" y="-144"/>
+		</transition>
+		<transition>
+			<source ref="id3"/>
+			<target ref="id4"/>
+			<nail x="-731" y="-305"/>
+		</transition>
+		<transition>
+			<source ref="id3"/>
+			<target ref="id1"/>
+			<label kind="synchronisation" x="-544" y="-263">ping[id]?</label>
+		</transition>
+		<transition>
+			<source ref="id2"/>
+			<target ref="id1"/>
+			<label kind="guard" x="-764" y="-203">t &gt;= 5000</label>
+			<label kind="assignment" x="-680" y="-195">t = 0, t_read = 0</label>
+			<nail x="-731" y="-178"/>
+		</transition>
+		<transition>
+			<source ref="id0"/>
+			<target ref="id4"/>
+			<label kind="synchronisation" x="-917" y="-254">data[id]!</label>
+		</transition>
+		<transition>
+			<source ref="id2"/>
+			<target ref="id0"/>
+			<label kind="guard" x="-884" y="-186">t &lt; 2000</label>
+			<label kind="assignment" x="-875" y="-161">c = 0</label>
+		</transition>
+		<transition>
+			<source ref="id4"/>
+			<target ref="id2"/>
+			<label kind="synchronisation" x="-773" y="-254">ping[id]?</label>
+		</transition>
+		<transition>
+			<source ref="id4"/>
+			<target ref="id3"/>
+			<label kind="assignment" x="-688" y="-356">t = 0, t_read = 0</label>
+			<nail x="-731" y="-331"/>
+		</transition>
+	</template>
+	<template>
+		<name x="5" y="5">Base</name>
+		<parameter>const id_t id</parameter>
+		<declaration>// Place local declarations here.
+clock t, c;
+int i = 0; </declaration>
+		<location id="id5" x="-238" y="68" color="#ffc0cb">
+			<name x="-264" y="85">Error</name>
+		</location>
+		<location id="id6" x="0" y="68" color="#00ff00">
+			<name x="-25" y="85">Waiting</name>
+		</location>
+		<location id="id7" x="0" y="-42" color="#ffa500">
+			<name x="17" y="-68">Idle</name>
+		</location>
+		<init ref="id7"/>
+		<transition>
+			<source ref="id6"/>
+			<target ref="id5"/>
+			<label kind="guard" x="-170" y="68">c &gt; Deadline</label>
+		</transition>
+		<transition>
+			<source ref="id6"/>
+			<target ref="id7"/>
+			<label kind="synchronisation" x="-119" y="17">data[i]?</label>
+			<label kind="assignment" x="-187" y="-34">i = (i + 1) % N, t = 0</label>
+			<nail x="-59" y="68"/>
+			<nail x="-59" y="-42"/>
+		</transition>
+		<transition>
+			<source ref="id7"/>
+			<target ref="id6"/>
+			<label kind="guard" x="76" y="-25">t &gt;= (Frequency/N)</label>
+			<label kind="synchronisation" x="76" y="0">ping[i]!</label>
+			<label kind="assignment" x="76" y="25">c = 0</label>
+			<nail x="59" y="-42"/>
+			<nail x="59" y="0"/>
+			<nail x="59" y="68"/>
+		</transition>
+	</template>
+	<system>// Remember to change N
+
+Satellite0 = Satellite(0);
+Satellite1 = Satellite(1);
+Satellite2 = Satellite(2);
+Satellite3 = Satellite(3);
+Base0 = Base(0);
+
+system Base0, Satellite0, Satellite1, Satellite2, Satellite3;</system>
+	<queries>
+		<query>
+			<formula>E&lt;&gt; (time &gt; 100000 and Base0.Idle and Satellite0.Idle and Satellite1.Idle)
+			</formula>
+			<comment>
+			</comment>
+		</query>
+		<query>
+			<formula>A[] not (Base0.Error)
+			</formula>
+			<comment>
+			</comment>
+		</query>
+	</queries>
+</nta>
