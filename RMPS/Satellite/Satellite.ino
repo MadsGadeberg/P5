@@ -47,6 +47,7 @@ void loop() {
 	// Send the data
 	if (pingReceived)
 	{
+		prepareDataForBase();
 		rf::pr_send_samplePacket(sampleArray);
 		samplesCounter = 0; lastSampleTime = 0; // Start of new sample sequence
 	}
