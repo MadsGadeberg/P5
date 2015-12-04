@@ -21,6 +21,7 @@ char data[SAMPLE_ARRAY_SIZE];
 int getSample();
 void adcSetup();
 int registerToBase();
+void prepareDataForBase();
 
 void setup() {
     adcSetup();
@@ -121,4 +122,25 @@ int getSample() {
     digitalWrite(2, HIGH);
 
 	return value;
+}
+
+// Function to send the correct base - even if we have sampled for than SAMPLE_ARRAY_SIZE and needs to correct the order
+void prepareDataForBase()
+{
+	if (samplesCounter < SAMPLE_ARRAY_SIZE)
+		return; // Nothing to worry about
+	if (samplesCounter >= SAMPLE_ARRAY_SIZE) // We might have overridden the beginning of the array
+	{
+		uint16_t tempSampleArray[SAMPLE_ARRAY_SIZE];
+
+		int i = 0;
+		for (i; i < samplesCounter; i++) // Get the oldest data and add to beginning of temp array
+			tempSampleArray[i] = sampleArray[(samplesCounter + i) % SAMPLE_ARRAY_SIZE];
+		int k = 0;
+		for (int j = i; j < SAMPLE_ARRAY_SIZE; j++) // Add the rest of the data to temp array
+			tempSampleArray[j] = sampleArray[k++];
+
+		memcpy(sampleArray, tempSampleArray, sizeof sampleArray); // Copy the temp into the "real" array
+	}
+
 }
