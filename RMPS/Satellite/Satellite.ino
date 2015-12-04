@@ -32,6 +32,7 @@ void setup() {
 }
 
 void loop() {
+	// Check if we receive a ping
 	if (millis() - lastSleepTime > TIME_BETWEEN_PING) // TODO Need a threshold
 	{
 		rf::packetTypes type = rf::pr_receive(data);
@@ -42,20 +43,22 @@ void loop() {
 		}
 	}
 
+	// Send the data
 	if (pingReceived)
 	{
 		rf::pr_send_samplePacket(sampleArray);
-		samplesCounter = 0;
+		samplesCounter = 0; lastSampleTime = 0; // Start of new sample sequence
 	}
 
+	// Is it time to sample new data?
 	if (millis() - lastSampleTime > TIME_BETWEEN_SAMPLE)
 	{
 		lastSampleTime = millis();
-		sampleArray[samplesCounter] = (uint16_t)getSample();
+		sampleArray[(samplesCounter++) % SAMPLE_ARRAY_SIZE] = getSample();
 	}
 }
 
-// function that sends the Real ID to the base and returns a Virtual ID if tha base accepts our request
+// Function that sends the Real ID to the base and returns a Virtual ID if the base accepts our request
 int registerToBase(){
 	uint16_t newVID = -1; // -1 indicates that no VID have been assigned
 
