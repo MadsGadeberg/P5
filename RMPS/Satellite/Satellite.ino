@@ -52,8 +52,8 @@ void loop() {
 		samplesCounter = 0; lastSampleTime = 0; // Start of new sample sequence
 	}
 
-	// Is it time to sample new data?
-	if (millis() - lastSampleTime > TIME_BETWEEN_SAMPLE)
+	// Is it time to sample new data? when the absolute time is bigger then the calculated sample time, then sample!
+	if (lastSleepTime + samplesCounter * TIME_BETWEEN_SAMPLE < millis())
 	{
 		lastSampleTime = millis();
 		sampleArray[(samplesCounter++) % SAMPLE_ARRAY_SIZE] = getSample();
