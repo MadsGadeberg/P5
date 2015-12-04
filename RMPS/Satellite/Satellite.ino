@@ -1,18 +1,19 @@
-#include "rfpr.h"
-#include "rfhw.h"
-#include "rfapp.h"
+#include "../Libraries/rfpr.h"
+#include "../Libraries/rfhw.h"
+#include "../Libraries/rfapp.h"
 #include <Arduino.h>
 
 // Constants
 #define RID 1
-#define WAIT_TIME_FOR_ADC 3
+#define TIME_BETWEEN_SAMPLE TIME_BETWEEN_PING / SAMPLE_ARRAY_SIZE
 
 // Global variables
 int myVID = -1; // a Virtual ID that gets assigned from the base when connected to it.
-int samplesCounter = 0; // The current nr of samples
+int samplesCounter = 0; // The current number of samples
 uint16_t sampleArray[SAMPLE_ARRAY_SIZE]; // The data being sent to the base
 
 unsigned long int lastSleepTime = 0; // The time of last sleep. Needed because we want to sleep between each ping to save battery
+unsigned long int lastSampleTime = 0; // The time of last ping
 bool pingReceived = false;
 char data[SAMPLE_ARRAY_SIZE];
 
@@ -26,7 +27,7 @@ void setup() {
 	pinMode(2, OUTPUT);
 	rf::hw_init((uint8_t)GROUP); // Initializing the RF module
   
-	while (myVID == -1)
+	while (myVID == -1) // TODO Implement timeout
 		myVID = registerToBase(); // Waiting for the base to acknowledge us, granting a VID
 }
 
@@ -47,8 +48,11 @@ void loop() {
 		samplesCounter = 0;
 	}
 
-	sampleArray[samplesCounter < SAMPLE_ARRAY_SIZE ? samplesCounter++ : samplesCounter] = (uint16_t)getSample(); // Getting value from the straingauge
-	delay(WAIT_TIME_FOR_ADC);
+	if (millis() - lastSampleTime > TIME_BETWEEN_SAMPLE)
+	{
+		lastSampleTime = millis();
+		sampleArray[samplesCounter] = (uint16_t)getSample();
+	}
 }
 
 // function that sends the Real ID to the base and returns a Virtual ID if tha base accepts our request
