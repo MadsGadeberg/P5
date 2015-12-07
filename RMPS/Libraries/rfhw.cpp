@@ -103,7 +103,6 @@ namespace rf {
     	digitalWrite(RFM_IRQ, HIGH);
 	}
 	
-	// Identifier handled in protocol
 	void hw_init(uint8_t byte_filter) {
 		// Set filter
 		hw_filter = byte_filter;
