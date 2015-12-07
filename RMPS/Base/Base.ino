@@ -53,7 +53,6 @@ void loop() {
 			getDataFromSatellite(satelliteCount);
 		}
 	}
-	
 	checkForStateChange();
 }
 

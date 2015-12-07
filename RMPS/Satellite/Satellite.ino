@@ -33,7 +33,7 @@ void setup() {
 
 void loop() {
 	// Check for ping
-	if (pingRecievedTime + TIME_BETWEEN_PING_SEQUENCE - SLEEP_TIME_THRESHOLD > millis()) // sleeptime threshold is the unsertainty of drift and other stuff
+	if (pingRecievedTime + TIME_BETWEEN_PING_SEQUENCE - SLEEP_TIME_THRESHOLD < millis()) // sleeptime threshold is the unsertainty of drift and other stuff
 	{
 		rf::packetTypes type = rf::pr_receive(data);
 		if (type == rf::PING && ((rf::Ping*)data)->VID == myVID)
@@ -51,7 +51,6 @@ void loop() {
 	// Is it time to sample new data? when the absolute time is bigger then the calculated sample time, then sample!
 	if (pingRecievedTime + samplesCounter * TIME_BETWEEN_SAMPLE < millis())
 	{
-		lastSampleTime = millis();
 		sampleArray[(samplesCounter++) % SAMPLE_ARRAY_SIZE] = getSample();
 	}
 }
