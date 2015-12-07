@@ -122,7 +122,7 @@ bool ReadSerial() {
     // Detect type of read
     if (currentSerialRead[currentSerialReadIndex] == '\n') {
       // Terminate with null sign - replace newline
-      currentSerialRead[currentSerialReadIndex--] = '\0';
+      currentSerialRead[currentSerialReadIndex--] = '\0';
       return true;
     }
 
