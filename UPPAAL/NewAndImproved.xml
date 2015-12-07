@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE nta PUBLIC '-//Uppaal Team//DTD Flat System 1.1//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_2.dtd'>
 <nta>
-	<declaration>const int 	N = 5;         // Number of satellites
+	<declaration>const int 	N = 8;         // Number of satellites
 typedef scalar[N] id_t;
 
 chan ping[id_t];
@@ -15,7 +15,7 @@ const int PING_COST = 6000;                // How long does it take to ping a sa
 const int DATA_FREQUENCY = 200000;         // We need data every x ms
 const int DEADLINE = DATA_FREQUENCY / N;
 
-const int DATAPROCESSING_COST = 50000;
+const int DATAPROCESSING_COST = 20000;
 
 const int UNCERTAINTY = 100;
 const int SLEEP_TIME = (DATA_FREQUENCY / N) - UNCERTAINTY; 
@@ -27,7 +27,7 @@ const int SLEEP_TIME = (DATA_FREQUENCY / N) - UNCERTAINTY;
 clock CLOCK;
 
 id_t i;</declaration>
-		<location id="id0" x="-246" y="-246">
+		<location id="id0" x="-246" y="-246" color="#ff00ff">
 			<name x="-212" y="-314">Dataprocessing</name>
 			<label kind="invariant" x="-212" y="-297">CLOCK &lt;= DATAPROCESSING_COST &amp;&amp; 
 CLOCK &lt;= DEADLINE</label>
@@ -101,106 +101,109 @@ int BytesSent;
 clock TX_CLOCK;
 clock SLEEP_CLOCK;
 clock SAMPLE_CLOCK;</declaration>
-		<location id="id5" x="-263" y="391">
+		<location id="id5" x="76" y="-59">
+			<urgent/>
+		</location>
+		<location id="id6" x="-263" y="391" color="#00ffff">
 			<name x="-339" y="408">Sampling_Transmitting</name>
 			<label kind="invariant" x="-467" y="425">SAMPLE_CLOCK &lt;= SAMPLE_COST &amp;&amp; TX_CLOCK &lt;= TX_COST</label>
 		</location>
-		<location id="id6" x="-603" y="-144">
+		<location id="id7" x="-603" y="-144" color="#ffa500">
 			<name x="-671" y="-178">Sampling_Sleeping</name>
 			<label kind="invariant" x="-884" y="-195">SAMPLE_CLOCK &lt;= SAMPLE_COST &amp;&amp; SLEEP_CLOCK &lt;= SLEEP_TIME</label>
 		</location>
-		<location id="id7" x="-255" y="-144" color="#ff00ff">
+		<location id="id8" x="-255" y="-144" color="#00ff00">
 			<name x="-314" y="-178">Sampling_Receiving</name>
 			<label kind="invariant" x="-382" y="-195">SAMPLE_CLOCK &lt;= SAMPLE_COST</label>
 		</location>
-		<location id="id8" x="-603" y="60" color="#ffa500">
+		<location id="id9" x="-603" y="60" color="#ffa500">
 			<name x="-705" y="42">RF_Sleeping</name>
-			<label kind="invariant" x="-833" y="68">SLEEP_CLOCK &lt;= SLEEP_TIME</label>
+			<label kind="invariant" x="-841" y="59">SLEEP_CLOCK &lt;= SLEEP_TIME</label>
 		</location>
-		<location id="id9" x="-263" y="238">
-			<name x="-246" y="221">Transmitting</name>
-			<label kind="invariant" x="-246" y="238">TX_CLOCK &lt;= TX_COST</label>
+		<location id="id10" x="-263" y="238" color="#00ffff">
+			<name x="-238" y="229">Transmitting</name>
+			<label kind="invariant" x="-238" y="246">TX_CLOCK &lt;= TX_COST</label>
 		</location>
-		<location id="id10" x="-263" y="59">
+		<location id="id11" x="-263" y="59" color="#00ff00">
 			<name x="-246" y="42">Receiving</name>
 		</location>
-		<init ref="id10"/>
+		<init ref="id11"/>
 		<transition>
 			<source ref="id5"/>
-			<target ref="id8"/>
+			<target ref="id10"/>
+			<nail x="76" y="111"/>
+		</transition>
+		<transition>
+			<source ref="id6"/>
+			<target ref="id9"/>
 			<label kind="guard" x="-705" y="391">TX_CLOCK &gt;= TX_COST</label>
 			<label kind="synchronisation" x="-688" y="357">data[id]!</label>
 			<nail x="-629" y="391"/>
 			<nail x="-629" y="102"/>
 		</transition>
 		<transition>
-			<source ref="id7"/>
-			<target ref="id9"/>
-			<label kind="guard" x="-51" y="-110">SAMPLE_CLOCK &gt;= SAMPLE_COST</label>
-			<label kind="synchronisation" x="-51" y="-93">ping[id]?</label>
-			<label kind="assignment" x="-51" y="-76">TX_CLOCK = 0, SLEEP_CLOCK = 0</label>
-			<nail x="110" y="17"/>
-			<nail x="110" y="178"/>
-			<nail x="110" y="204"/>
-			<nail x="-229" y="204"/>
+			<source ref="id8"/>
+			<target ref="id5"/>
+			<label kind="synchronisation" x="-110" y="-153">ping[id]?</label>
+			<label kind="assignment" x="-110" y="-136">TX_CLOCK = 0, SLEEP_CLOCK = 0</label>
 		</transition>
 		<transition>
-			<source ref="id7"/>
-			<target ref="id10"/>
+			<source ref="id8"/>
+			<target ref="id11"/>
 			<label kind="guard" x="-229" y="8">SAMPLE_CLOCK &gt;= SAMPLE_COST</label>
 			<nail x="-212" y="-42"/>
 		</transition>
 		<transition>
-			<source ref="id5"/>
-			<target ref="id9"/>
+			<source ref="id6"/>
+			<target ref="id10"/>
 			<label kind="guard" x="-544" y="314">SAMPLE_CLOCK &gt;= SAMPLE_COST</label>
 			<nail x="-297" y="314"/>
 		</transition>
 		<transition>
-			<source ref="id6"/>
-			<target ref="id8"/>
+			<source ref="id7"/>
+			<target ref="id9"/>
 			<nail x="-578" y="-34"/>
 		</transition>
 		<transition>
-			<source ref="id10"/>
-			<target ref="id7"/>
+			<source ref="id11"/>
+			<target ref="id8"/>
 			<label kind="guard" x="-459" y="-76">SAMPLE_CLOCK &gt;= 
 SAMPLE_FREQUENCY</label>
 			<label kind="assignment" x="-459" y="-42">SAMPLE_CLOCK = 0</label>
 			<nail x="-297" y="-51"/>
 		</transition>
 		<transition>
-			<source ref="id9"/>
-			<target ref="id5"/>
+			<source ref="id10"/>
+			<target ref="id6"/>
 			<label kind="guard" x="-221" y="314">SAMPLE_CLOCK &gt;= 
 SAMPLE_FREQUENCY</label>
 			<label kind="assignment" x="-221" y="348">SAMPLE_CLOCK = 0</label>
 			<nail x="-229" y="314"/>
 		</transition>
 		<transition>
-			<source ref="id9"/>
-			<target ref="id8"/>
+			<source ref="id10"/>
+			<target ref="id9"/>
 			<label kind="guard" x="-552" y="246">TX_CLOCK &gt;= TX_COST</label>
 			<label kind="synchronisation" x="-518" y="263">data[id]!</label>
 			<nail x="-603" y="238"/>
 		</transition>
 		<transition>
-			<source ref="id8"/>
-			<target ref="id6"/>
+			<source ref="id9"/>
+			<target ref="id7"/>
 			<label kind="guard" x="-782" y="-68">SAMPLE_CLOCK &gt;= 
 SAMPLE_FREQUENCY</label>
 			<label kind="assignment" x="-782" y="-34">SAMPLE_CLOCK = 0</label>
 			<nail x="-637" y="-34"/>
 		</transition>
 		<transition>
-			<source ref="id10"/>
-			<target ref="id9"/>
+			<source ref="id11"/>
+			<target ref="id10"/>
 			<label kind="synchronisation" x="-255" y="136">ping[id]?</label>
 			<label kind="assignment" x="-255" y="118">TX_CLOCK = 0, SLEEP_CLOCK = 0</label>
 		</transition>
 		<transition>
-			<source ref="id8"/>
-			<target ref="id10"/>
+			<source ref="id9"/>
+			<target ref="id11"/>
 			<label kind="guard" x="-544" y="68">SLEEP_CLOCK &gt;= SLEEP_TIME</label>
 		</transition>
 	</template>
