@@ -137,7 +137,7 @@ clock SAMPLE_CLOCK;</declaration>
 			<source ref="id6"/>
 			<target ref="id9"/>
 			<label kind="guard" x="-705" y="391">TX_CLOCK &gt;= TX_COST</label>
-			<label kind="synchronisation" x="-688" y="357">data[id]!</label>
+			<label kind="synchronisation" x="-688" y="365">data[id]!</label>
 			<nail x="-629" y="391"/>
 			<nail x="-629" y="102"/>
 		</transition>
@@ -150,7 +150,7 @@ clock SAMPLE_CLOCK;</declaration>
 		<transition>
 			<source ref="id8"/>
 			<target ref="id11"/>
-			<label kind="guard" x="-229" y="8">SAMPLE_CLOCK &gt;= SAMPLE_COST</label>
+			<label kind="guard" x="-229" y="0">SAMPLE_CLOCK &gt;= SAMPLE_COST</label>
 			<nail x="-212" y="-42"/>
 		</transition>
 		<transition>
@@ -183,17 +183,17 @@ SAMPLE_FREQUENCY</label>
 		<transition>
 			<source ref="id10"/>
 			<target ref="id9"/>
-			<label kind="guard" x="-552" y="246">TX_CLOCK &gt;= TX_COST</label>
-			<label kind="synchronisation" x="-518" y="263">data[id]!</label>
+			<label kind="guard" x="-544" y="238">TX_CLOCK &gt;= TX_COST</label>
+			<label kind="synchronisation" x="-493" y="255">data[id]!</label>
 			<nail x="-603" y="238"/>
 		</transition>
 		<transition>
 			<source ref="id9"/>
 			<target ref="id7"/>
-			<label kind="guard" x="-782" y="-68">SAMPLE_CLOCK &gt;= 
+			<label kind="guard" x="-790" y="-68">SAMPLE_CLOCK &gt;= 
 SAMPLE_FREQUENCY</label>
-			<label kind="assignment" x="-782" y="-34">SAMPLE_CLOCK = 0</label>
-			<nail x="-637" y="-34"/>
+			<label kind="assignment" x="-790" y="-34">SAMPLE_CLOCK = 0</label>
+			<nail x="-629" y="-34"/>
 		</transition>
 		<transition>
 			<source ref="id11"/>
@@ -204,7 +204,7 @@ SAMPLE_FREQUENCY</label>
 		<transition>
 			<source ref="id9"/>
 			<target ref="id11"/>
-			<label kind="guard" x="-544" y="68">SLEEP_CLOCK &gt;= SLEEP_TIME</label>
+			<label kind="guard" x="-544" y="59">SLEEP_CLOCK &gt;= SLEEP_TIME</label>
 		</transition>
 	</template>
 	<system>Base0 = Base();
