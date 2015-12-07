@@ -40,8 +40,6 @@
 #define STATE_TX_PRE2	0xfc
 #define STATE_TX_BYTE0	0xfd
 #define STATE_TX_FILTER	0xfe
-
-
 #define STATE_TX_LEN	0xff
 
 #define STATE_IDLE 		0xf8
@@ -82,12 +80,12 @@ namespace rf {
     	// Disable RF (SPI)
     	hw_disableRF();
     	
-    	// 0x51
-		// SPE - Enables the SPI when 1 (&0x40)
-    	// MSTR - Sets the Arduino in master mode when 1, slave mode when 0 (&0x10)
-    	// SPR1 and SPR0 - Sets the SPI speed, 00 is fastest (4MHz) 11 is slowest (250KHz) (means it's in between) (&0x03)
-    	// https://www.arduino.cc/en/Tutorial/SPIEEPROM
     	#ifdef SPCR
+    		// 0x51
+			// SPE - Enables the SPI when 1 (&0x40)
+    		// MSTR - Sets the Arduino in master mode when 1, slave mode when 0 (&0x10)
+    		// SPR1 and SPR0 - Sets the SPI speed, 00 is fastest (4MHz) 11 is slowest (250KHz) (means it's in between) (&0x03)
+    		// https://www.arduino.cc/en/Tutorial/SPIEEPROM
     		SPCR = _BV(SPE) | _BV(MSTR); 
     		bitSet(SPCR, SPR0); // Not required -> Remove for faster transfer (see above comment)
     		
@@ -171,10 +169,6 @@ namespace rf {
     	hw_sendCMD(0x9850); // !mp,90kHz,MAX OUT
     	hw_sendCMD(0xCC77); // OB1，OB0, LPX,！ddy，DDIT，BW0
     	
-    	// hw_sendCMD(0xE000); // NOT USE
-    	// hw_sendCMD(0xC800); // NOT USE
-    	// hw_sendCMD(0xC049); // 1.66MHz,3.1V
-    	
     	// Set state idle
     	hw_setStateSleep();
     	
@@ -228,6 +222,7 @@ namespace rf {
 				// hw_buffer_len is 1 indexed
 				out = hw_buffer[state];
 			} else if (state == hw_buffer_len || state == STATE_TX_PRE0 || state == STATE_TX_PRE1 || state == STATE_TX_PRE2) {
+				// Also send 0xAA one time after all data is sent or the data is not recieved correctly (last byte replaced by random)
 				out = 0xAA;
 			} else {
 				out = 0xAA;
@@ -276,7 +271,6 @@ namespace rf {
 		// Enable crystal oscillator: &0x8
 		// Disable clock output of CLK pin: &0x1 (Clock is generated from master)
 		//hw_sendCMD(0x8239);
-		
 		hw_sendCMD(0x823D);
 	}
 	
@@ -415,7 +409,7 @@ namespace rf {
 	uint8_t hw_sendCMDByte (uint8_t out) {
 		// Arduino
 		#ifdef SPDR
-			SPDR = out;                    // Start the transmission
+			SPDR = out;                    	// Start the transmission
   			while (!(SPSR & (1<<SPIF)));    // Wait for the end of the transmission
   			return SPDR;                   	// return the received byte
   		#else
