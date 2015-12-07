@@ -20,6 +20,7 @@ int nrOfSatellitesConected = 0; // This value also shows how many connected sate
 uint16_t connectedSatellites[MAX_CONNECTED_SATELLITES]; // the array that holds the RID of the connected satellites
 
 // satellite ping operation information
+unsigned long int runmodeInitiated = 0;	// the time runmode was initiated - used to calculate ping times
 unsigned long int pingSent = 0; // time of last ping sent
 int pingSatelliteCount = 0;		// The number op satellite pings in lifetime of base
 int satellitePinged = 0;		// if the current sattelite have ben pinged - ping only once!
@@ -48,7 +49,7 @@ void loop() {
 		int pingSequenceCount = pingSatelliteCount / nrOfSatellitesConected;		// the nr of ping sequences elapsed
 		int satelliteCount = pingSatelliteCount % nrOfSatellitesConected;			// the sattelite that needs to be pinged
 
-		if (millis() + (pingSequenceCount * TIME_BETWEEN_PING_SEQUENCE) + (satelliteCount * TIME_BETWEEN_PING) < millis()) {	// ping the satellite when the calculated ping time is smaller than the actual time.
+		if (runmodeInitiated + (pingSequenceCount * TIME_BETWEEN_PING_SEQUENCE) + (satelliteCount * TIME_BETWEEN_PING) < millis()) {	// ping the satellite when the calculated ping time is smaller than the actual time.
 			getDataFromSatellite(satelliteCount);
 		}
 	}
@@ -121,11 +122,22 @@ void incrementSatellite() {
 void checnForStateChange() {
 	if (digitalRead(RUNPIN))			// Run button
 		systemState = LISTENINGFORSATS;
-	else if (digitalRead(LISTENPIN))	// Listen for satellites
-		systemState = RUNMODE;
+	else if (digitalRead(LISTENPIN)) {	// Listen for satellites
+		initRunMode();
+	}
 }
 
 // this function uses data gotten from satellite
 void useData(rf::SamplePacketVerified* data) {
 
+}
+
+// setting runmode configuration.
+void initRunMode() {
+	systemState = RUNMODE;
+	// resetting ping counts
+	pingSatelliteCount = 0;
+	satellitePinged = 0;
+	pingSent = 0;
+	runmodeInitiated = millis();
 }
