@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE nta PUBLIC '-//Uppaal Team//DTD Flat System 1.1//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_2.dtd'>
+<nta>
+	<declaration>// Place global declarations here. 
+
+const int 	N = 3;         // # tasks
+typedef int[0,N-1] id_t;
+
+broadcast chan ping[N], data[N];
+
+clock time;
+
+const int D[N] = { 50, 50, 50 };	   // Deadlines
+const int C[N] = { 40, 40, 40 };       // Computation Times</declaration>
+	<template>
+		<name>Satellite</name>
+		<parameter>const id_t id</parameter>
+		<declaration>clock c;</declaration>
+		<location id="id0" x="-8" y="68" color="#00ff00">
+			<name x="-42" y="85">SENDING</name>
+			<label kind="invariant" x="-34" y="102">c&lt;=C[id]</label>
+		</location>
+		<location id="id1" x="-8" y="-25" color="#ffa500">
+			<name x="-34" y="-59">READY</name>
+		</location>
+		<init ref="id1"/>
+		<transition>
+			<source ref="id0"/>
+			<target ref="id1"/>
+			<label kind="guard" x="-153" y="-17">c==C[id]</label>
+			<label kind="synchronisation" x="-153" y="8">data[id]!</label>
+			<nail x="-93" y="68"/>
+			<nail x="-93" y="-25"/>
+		</transition>
+		<transition>
+			<source ref="id1"/>
+			<target ref="id0"/>
+			<label kind="synchronisation" x="85" y="8">ping[id]?</label>
+			<label kind="assignment" x="85" y="-17">c = 0</label>
+			<nail x="68" y="-25"/>
+			<nail x="68" y="68"/>
+		</transition>
+	</template>
+	<template>
+		<name x="5" y="5">Base</name>
+		<parameter>const id_t id</parameter>
+		<declaration>// Place local declarations here.
+clock t;
+int i = 0;</declaration>
+		<location id="id2" x="0" y="68">
+			<name x="-25" y="85">WAITING</name>
+		</location>
+		<location id="id3" x="0" y="-42">
+			<name x="-10" y="-76">IDLE</name>
+		</location>
+		<init ref="id3"/>
+		<transition>
+			<source ref="id2"/>
+			<target ref="id3"/>
+			<label kind="synchronisation" x="-119" y="17">data[i]?</label>
+			<label kind="assignment" x="-153" y="-25">i = (i + 1) % N</label>
+			<nail x="-59" y="68"/>
+			<nail x="-59" y="-42"/>
+		</transition>
+		<transition>
+			<source ref="id3"/>
+			<target ref="id2"/>
+			<label kind="synchronisation" x="76" y="17">ping[i]!</label>
+			<nail x="59" y="-42"/>
+			<nail x="59" y="0"/>
+			<nail x="59" y="68"/>
+		</transition>
+	</template>
+	<system>// Place template instantiations here.
+Satellite1 = Satellite(0);
+Satellite2 = Satellite(1);
+Satellite3 = Satellite(2);
+Base1 = Base(0);
+// List one or more processes to be composed into a system.
+system Base1, Satellite1, Satellite2, Satellite3;
+    </system>
+	<queries>
+	</queries>
+</nta>

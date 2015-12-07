@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE nta PUBLIC '-//Uppaal Team//DTD Flat System 1.1//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_2.dtd'>
+<nta>
+	<declaration>const int 	N = 10;         // Number of satellites
+typedef int[0,N-1] id_t;
+
+chan ping[N], data[N];
+
+const int Deadline    = 50;      // Deadlines
+const int ProcessCost = 20;      // Computation Times for Data Processing
+const int SendCost    = 20;      // Computation Times for Sending via RF</declaration>
+	<template>
+		<name>Satellite</name>
+		<parameter>const id_t id</parameter>
+		<declaration>clock c;</declaration>
+		<location id="id0" x="-8" y="161" color="#00ff00">
+			<name x="8" y="153">SENDING</name>
+			<label kind="invariant" x="8" y="170">c &lt;= SendCost</label>
+		</location>
+		<location id="id1" x="-8" y="68" color="#0000ff">
+			<name x="8" y="59">DATAPROCESSING</name>
+			<label kind="invariant" x="-136" y="59">c &lt;= ProcessCost</label>
+		</location>
+		<location id="id2" x="-8" y="-25" color="#ffa500">
+			<name x="-25" y="-59">IDLE</name>
+		</location>
+		<init ref="id2"/>
+		<transition>
+			<source ref="id0"/>
+			<target ref="id2"/>
+			<label kind="guard" x="-348" y="42">c == SendCost</label>
+			<label kind="synchronisation" x="-306" y="68">data[id]!</label>
+			<nail x="-246" y="161"/>
+			<nail x="-246" y="-25"/>
+		</transition>
+		<transition>
+			<source ref="id1"/>
+			<target ref="id0"/>
+			<label kind="guard" x="0" y="93">c == ProcessCost</label>
+			<label kind="assignment" x="0" y="119">c = 0</label>
+		</transition>
+		<transition>
+			<source ref="id2"/>
+			<target ref="id1"/>
+			<label kind="synchronisation" x="8" y="17">ping[id]?</label>
+			<label kind="assignment" x="8" y="-8">c = 0</label>
+			<nail x="-8" y="-8"/>
+			<nail x="-8" y="42"/>
+			<nail x="-8" y="51"/>
+		</transition>
+	</template>
+	<template>
+		<name x="5" y="5">Base</name>
+		<parameter>const id_t id</parameter>
+		<declaration>// Place local declarations here.
+clock t;
+int i = 0; </declaration>
+		<location id="id3" x="-238" y="68" color="#ffc0cb">
+			<name x="-264" y="85">ERROR</name>
+		</location>
+		<location id="id4" x="0" y="68" color="#00ff00">
+			<name x="-25" y="85">WAITING</name>
+		</location>
+		<location id="id5" x="0" y="-42" color="#ffa500">
+			<name x="-17" y="-76">IDLE</name>
+		</location>
+		<init ref="id5"/>
+		<transition>
+			<source ref="id4"/>
+			<target ref="id3"/>
+			<label kind="guard" x="-161" y="68">t &gt; Deadline</label>
+		</transition>
+		<transition>
+			<source ref="id4"/>
+			<target ref="id5"/>
+			<label kind="synchronisation" x="-119" y="17">data[i]?</label>
+			<label kind="assignment" x="-153" y="-25">i = (i + 1) % N</label>
+			<nail x="-59" y="68"/>
+			<nail x="-59" y="-42"/>
+		</transition>
+		<transition>
+			<source ref="id5"/>
+			<target ref="id4"/>
+			<label kind="synchronisation" x="76" y="17">ping[i]!</label>
+			<label kind="assignment" x="76" y="-8">t = 0</label>
+			<nail x="59" y="-42"/>
+			<nail x="59" y="0"/>
+			<nail x="59" y="68"/>
+		</transition>
+	</template>
+	<system>Satellite0 = Satellite(0);
+Satellite1 = Satellite(1);
+Satellite2 = Satellite(2);
+Satellite3 = Satellite(3);
+Satellite4 = Satellite(4);
+Satellite5 = Satellite(5);
+Satellite6 = Satellite(6);
+Satellite7 = Satellite(7);
+Satellite8 = Satellite(8);
+Satellite9 = Satellite(9);
+
+Base0 = Base(0);
+system Base0, Satellite0, Satellite1, Satellite2, Satellite3, Satellite4, Satellite5, Satellite6, Satellite7, Satellite8, Satellite9;
+
+gantt {
+Satellite0 : Satellite0.IDLE -&gt; 5, Satellite0.DATAPROCESSING -&gt; 1, Satellite0.SENDING -&gt;3;
+Satellite1 : Satellite1.IDLE -&gt; 5, Satellite1.DATAPROCESSING -&gt; 1, Satellite1.SENDING -&gt;3;
+Satellite2 : Satellite2.IDLE -&gt; 5, Satellite2.DATAPROCESSING -&gt; 1, Satellite2.SENDING -&gt;3;
+Satellite3 : Satellite3.IDLE -&gt; 5, Satellite3.DATAPROCESSING -&gt; 1, Satellite3.SENDING -&gt;3;
+Satellite4 : Satellite4.IDLE -&gt; 5, Satellite4.DATAPROCESSING -&gt; 1, Satellite4.SENDING -&gt;3;
+Satellite5 : Satellite5.IDLE -&gt; 5, Satellite5.DATAPROCESSING -&gt; 1, Satellite5.SENDING -&gt;3;
+Satellite6 : Satellite6.IDLE -&gt; 5, Satellite6.DATAPROCESSING -&gt; 1, Satellite6.SENDING -&gt;3;
+Satellite7 : Satellite7.IDLE -&gt; 5, Satellite7.DATAPROCESSING -&gt; 1, Satellite7.SENDING -&gt;3;
+Satellite8 : Satellite8.IDLE -&gt; 5, Satellite8.DATAPROCESSING -&gt; 1, Satellite8.SENDING -&gt;3;
+Satellite9 : Satellite9.IDLE -&gt; 5, Satellite9.DATAPROCESSING -&gt; 1, Satellite9.SENDING -&gt;3;
+}</system>
+	<queries>
+		<query>
+			<formula>A[] not (Base0.ERROR)
+			</formula>
+			<comment>
+			</comment>
+		</query>
+	</queries>
+</nta>
