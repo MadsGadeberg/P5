@@ -6,15 +6,14 @@
 // Constants
 #define RID 1
 #define TIME_BETWEEN_SAMPLE TIME_BETWEEN_PING / SAMPLE_ARRAY_SIZE
+#define SLEEP_TIME_THRESHOLD 10
 
 // Global variables
 int myVID = -1; // a Virtual ID that gets assigned from the base when connected to it.
 int samplesCounter = 0; // The current number of samples
 uint16_t sampleArray[SAMPLE_ARRAY_SIZE]; // The data being sent to the base
 
-unsigned long int lastSleepTime = 0; // The time of last sleep. Needed because we want to sleep between each ping to save battery
-unsigned long int lastSampleTime = 0; // The time of last ping
-bool pingReceived = false;
+unsigned long int pingRecievedTime = 0; // Time of last ping
 char data[SAMPLE_ARRAY_SIZE];
 
 // Prototypes
@@ -33,27 +32,24 @@ void setup() {
 }
 
 void loop() {
-	// Check if we receive a ping
-	if (millis() - lastSleepTime > TIME_BETWEEN_PING) // TODO Need a threshold
+	// Check for ping
+	if (pingRecievedTime + TIME_BETWEEN_PING_SEQUENCE - SLEEP_TIME_THRESHOLD > millis()) // sleeptime threshold is the unsertainty of drift and other stuff
 	{
 		rf::packetTypes type = rf::pr_receive(data);
 		if (type == rf::PING && ((rf::Ping*)data)->VID == myVID)
 		{
-			pingReceived = true;
-			lastSleepTime = millis(); // The RF module automatically sleeps after pr_receive()
+			// Start of new sample sequence
+			pingRecievedTime = millis();
+			samplesCounter = 0;
+
+			// send dataPacket
+			prepareDataForBase();
+			rf::pr_send_samplePacket(sampleArray);
 		}
 	}
 
-	// Send the data
-	if (pingReceived)
-	{
-		prepareDataForBase();
-		rf::pr_send_samplePacket(sampleArray);
-		samplesCounter = 0; lastSampleTime = 0; // Start of new sample sequence
-	}
-
 	// Is it time to sample new data? when the absolute time is bigger then the calculated sample time, then sample!
-	if (lastSleepTime + samplesCounter * TIME_BETWEEN_SAMPLE < millis())
+	if (pingRecievedTime + samplesCounter * TIME_BETWEEN_SAMPLE < millis())
 	{
 		lastSampleTime = millis();
 		sampleArray[(samplesCounter++) % SAMPLE_ARRAY_SIZE] = getSample();
