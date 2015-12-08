@@ -9,7 +9,7 @@ chan data[id_t];
 
 // All constants are in μs (microseconds)
 
-const int SAMPLE_COST = 1000;
+const int SAMPLE_COST = 500;
 const int TX_COST = 12000;
 const int SAMPLE_FREQUENCY = 5000;
 
