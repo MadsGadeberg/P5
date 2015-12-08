@@ -26,6 +26,7 @@ void setup() {
     adcSetup();
 	pinMode(2, OUTPUT);
 	rf::hw_init((uint8_t)GROUP); // Initializing the RF module
+	delay(100); // Power up time (worst case from datasheet)
   
 	while (myVID == -1) // TODO Implement timeout
 		myVID = registerToBase(); // Waiting for the base to acknowledge us, granting a VID
