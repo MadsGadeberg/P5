@@ -56,7 +56,7 @@ namespace rf {
 	static void hw_interrupt();
 	void hw_enableRF();
 	void hw_disableRF();
-	void hw_setStateRecieve();
+	void hw_setStatereceive();
 	void hw_setStateIdle();
 	void hw_setStateTransmitter();
 	void hw_setStateSleep();
@@ -179,7 +179,7 @@ namespace rf {
 		hw_sendCMD(0x0000); // Wake up
 	
 		if (hw_state == STATE_RX) {
-			// Read from reciever
+			// Read from receiver
 			uint8_t in = hw_sendCMD(0xB000);
 			
 			if (hw_buffer_index == 0 && hw_buffer_len == 0) {
@@ -196,7 +196,7 @@ namespace rf {
 				// Read to byte array
 				hw_buffer[hw_buffer_index++] = in;
 				
-				// Detect end of recieve
+				// Detect end of receive
 				if (hw_buffer_index >= hw_buffer_len) {
 					// Go to sleep but do not change state
 					hw_sendCMD(0x8201);
@@ -221,7 +221,7 @@ namespace rf {
 				// hw_buffer_len is 1 indexed
 				out = hw_buffer[state];
 			} else if (state == hw_buffer_len || state == STATE_TX_PRE0 || state == STATE_TX_PRE1 || state == STATE_TX_PRE2) {
-				// Also send 0xAA one time after all data is sent or the data is not recieved correctly (last byte replaced by random)
+				// Also send 0xAA one time after all data is sent or the data is not received correctly (last byte replaced by random)
 				out = 0xAA;
 			} else {
 				out = 0xAA;
@@ -243,7 +243,7 @@ namespace rf {
 		digitalWrite(SPI_SS, HIGH);
 	}
 
-	inline void hw_setStateRecieve() {
+	inline void hw_setStatereceive() {
 		hw_state = STATE_RX;
 		
 		// Power Management Command
@@ -318,7 +318,7 @@ namespace rf {
 	}
 	
 	bool hw_canSend() {
-		// Check if we can stop the reciever
+		// Check if we can stop the receiver
 		// Status Read Command
 		// Antenna tuning signal strength: &0x100
 		// Serial.println(hw_sendCMD(0x0000); & 0x0100 == 0);
@@ -333,7 +333,7 @@ namespace rf {
 		return hw_state == STATE_IDLE;
 	}
 	
-	uint8_t* hw_recieve(uint8_t* length) {
+	uint8_t* hw_receive(uint8_t* length) {
 		if (hw_state == STATE_RX && hw_buffer_index >= hw_buffer_len && hw_buffer_index != 0) {
 			hw_state = STATE_IDLE;
 			
@@ -346,7 +346,7 @@ namespace rf {
 			hw_buffer_index = 0;
 			hw_buffer_len = 0;
 		
-			hw_setStateRecieve();
+			hw_setStatereceive();
 		}
 		
 		return NULL;

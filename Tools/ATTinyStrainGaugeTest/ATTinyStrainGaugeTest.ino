@@ -18,7 +18,7 @@ void setup() {
 
 void loop() {
   uint8_t len = 0;
-  uint8_t* data = rf::hw_recieve(&len);
+  uint8_t* data = rf::hw_receive(&len);
   if (data != NULL) {
     if (len == 4) {
       switch (data[0]) {

@@ -158,18 +158,18 @@ namespace rf {
 		return pr_send(samples);
 	}
 	
-	PacketTypes pr_recieve(char* output) {
-		// Read from hardware layer and check if any data is recieved
+	PacketTypes pr_receive(char* output) {
+		// Read from hardware layer and check if any data is received
 		uint8_t len = 0;
-		uint8_t* data = (uint8_t*)hw_recieve(&len);
+		uint8_t* data = (uint8_t*)hw_receive(&len);
 		if (data == NULL)
 			return NODATA;
 			
 		return pr_receive(output, data, len);
 	}
 	
-	// Recieve data. Outputs the packet type as return and the struct with the output parameter output
-	// Reads from data instead of rf_recieve
+	// receive data. Outputs the packet type as return and the struct with the output parameter output
+	// Reads from data instead of rf_receive
 	PacketTypes pr_receive(char* output, uint8_t* data, uint8_t len) {
 		if (data == NULL)
 			return NODATA;
