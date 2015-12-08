@@ -37,7 +37,7 @@ LinkedList<LinkedList<rf::Sample>> dataSet;	// all data retrieved - Memmory issu
 
 // Prototypes
 void registerSatellite();
-void getDataFromSatellite();
+void getDataFromSatellite(int satelliteNr);
 void pingSatellite(int satelliteNr);
 void incrementSatellite();
 void checkForStateChange();

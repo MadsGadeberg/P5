@@ -13,7 +13,7 @@ int myVID = -1; // a Virtual ID that gets assigned from the base when connected 
 int samplesCounter = 0; // The current number of samples
 uint16_t sampleArray[SAMPLE_PACKET_SIZE]; // The data being sent to the base
 
-unsigned long int pingreceivedTime = 0; // Time of last ping
+unsigned long int pingReceivedTime = 0; // Time of last ping
 char data[SAMPLE_PACKET_SIZE];
 
 // Prototypes
@@ -36,13 +36,13 @@ void setup() {
 
 void loop() {
 	// Check for ping
-	if (pingreceivedTime + TIME_BETWEEN_PING_SEQUENCE - SLEEP_TIME_THRESHOLD < millis()) // sleeptime threshold is the unsertainty of drift and other stuff
+	if (pingReceivedTime + TIME_BETWEEN_PING_SEQUENCE - SLEEP_TIME_THRESHOLD < millis()) // sleeptime threshold is the unsertainty of drift and other stuff
 	{
 		rf::packetTypes type = rf::pr_receive(data);
 		if (type == rf::PING && ((rf::Ping*)data)->VID == myVID)
 		{
 			// Start of new sample sequence
-			pingreceivedTime = millis();
+			pingReceivedTime = millis();
 			samplesCounter = 0;
 
 			// send dataPacket
@@ -52,7 +52,7 @@ void loop() {
 	}
 
 	// Is it time to sample new data? when the absolute time is bigger then the calculated sample time, then sample!
-	if (pingreceivedTime + samplesCounter * TIME_BETWEEN_SAMPLE < millis())
+	if (pingReceivedTime + samplesCounter * TIME_BETWEEN_SAMPLE < millis())
 	{
 		sampleArray[(samplesCounter++) % SAMPLE_PACKET_SIZE] = getSample();
 	}
