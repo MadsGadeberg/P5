@@ -1,6 +1,6 @@
-#include "../Libraries/rfpr.h"
-#include "../Libraries/rfhw.h"
-#include "../Libraries/rfapp.h"
+#include "rfpr.h"
+#include "rfhw.h"
+#include "rfapp.h"
 #include <Arduino.h>
 #include <string.h>
 #include <LinkedList.h>
@@ -162,26 +162,28 @@ void initRunMode() {
 }
 
 void printSampesToSerial() {
-	// iterate satellites
+	// timedelay is the time in the past we want to print. We need to wait for the data to be available from all the satellites before we can print them. The time we need to wait is the time from the newest dataset that is available for all satellites. To ensure we have all data it is easier to wait for at least TIME_BETWEEN_PING_SEQUENCE + the time it takes the satellite to return the data which is less than TIME_BETWEEN_PING. That way we always know we have the data needed.
+	int timeDelay = (TIME_BETWEEN_PING_SEQUENCE + TIME_BETWEEN_PING);
+
+	// the amount of samples douring timeDelay. 
+	int sampleDelay = timeDelay / TIME_BETWEEN_SAMPLES;
+
+	// The time system have ben in RunMode
+	unsigned long int runModeTime = millis() - runmodeInitiated;
+
+	// the samples from beginning of runmode. time/TIME_BETWEEN_SAMPLES - pingDelay
+	int samplesDouringRunmode = runModeTime / TIME_BETWEEN_SAMPLES;
+
+	// the sample that is safe to print for all satellites connected. This is respect to the schedueling algorithm. The base needs the data before we can print it.
+	int samplesToPrint = samplesDouringRunmode - sampleDelay;
+
+
+	// print sample for each satellite;
 	for (int i = 0; i < nrOfSatellitesConected; i++) {
-		// timedelay is the time in the past we want to print. We need to wait for the data to be available from all the satellites before we can print them. The time we need to wait is the time from the newest dataset that is available for all satellites. To ensure we have all data it is easier to wait for at least TIME_BETWEEN_PING_SEQUENCE + the time it takes the satellite to return the data which is less than TIME_BETWEEN_PING. That way we always know we have the data needed.
-		int timeDelay = (TIME_BETWEEN_PING_SEQUENCE + TIME_BETWEEN_PING);
-		
-		// the amount of samples douring timeDelay. 
-		int sampleDelay = timeDelay / TIME_BETWEEN_SAMPLES;
-	
-		// The time system have ben in RunMode
-		unsigned long int runModeTime = millis() - runmodeInitiated;
-
-		// the samples from beginning of runmode. time/TIME_BETWEEN_SAMPLES - pingDelay
-		int samplesDouringRunmode = runModeTime / TIME_BETWEEN_SAMPLES;
-
-		// the sample that is safe to print for all satellites connected. This is respect to the schedueling algorithm. The base needs the data before we can print it.
-		int samplesToPrint = samplesDouringRunmode - sampleDelay;
-
 		// the corrected sample to print. The samples for each satellite in dataSet is indexed with a difference of SAMPLES_BETWEEN_PINGS
 		int indexCorrectedSampleToPrint = samplesToPrint - SAMPLES_BETWEEN_PINGS * i;
 
-		dataSet.get(nrOfSatellitesConected).get(indexCorrectedSampleToPrint);
+		rf::Sample s = dataSet.get(nrOfSatellitesConected).get(indexCorrectedSampleToPrint);
+		Serial.print(s.value);
 	}
 }
