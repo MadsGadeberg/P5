@@ -7,12 +7,14 @@ typedef scalar[N] id_t;
 chan ping[id_t];
 chan data[id_t];
 
+// All constants are in μs (microseconds)
+
 const int SAMPLE_COST = 1000;
 const int TX_COST = 12000;
 const int SAMPLE_FREQUENCY = 5000;
 
 const int PING_COST = 6000;                // How long does it take to ping a satellite?
-const int DATA_FREQUENCY = 200000;         // We need data every x ms
+const int DATA_FREQUENCY = 200000;         // We need data every x microseconds
 const int DEADLINE = DATA_FREQUENCY / N;
 
 const int DATAPROCESSING_COST = 20000;
