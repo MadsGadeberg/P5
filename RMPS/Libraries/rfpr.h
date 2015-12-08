@@ -28,7 +28,7 @@ namespace rf {
 
 	// this struct contains all samples on a ping sequence. Exacly like samplePacket except that this data is verified if the fifferent samples have an error validating bit after transmitting. 
 	struct SamplePacketVerified {
-		Sample data[SAMPLE_ARRAY_SIZE];
+		Sample data[SAMPLE_PACKET_SIZE];
 	};
 
 	enum PacketTypes {

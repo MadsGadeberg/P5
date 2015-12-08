@@ -5,21 +5,23 @@
 
 // Constants
 #define RID 1
-#define TIME_BETWEEN_SAMPLE TIME_BETWEEN_PING / SAMPLE_ARRAY_SIZE
+#define TIME_BETWEEN_SAMPLE TIME_BETWEEN_PING / SAMPLE_PACKET_SIZE
 #define SLEEP_TIME_THRESHOLD 10
 
 // Global variables
 int myVID = -1; // a Virtual ID that gets assigned from the base when connected to it.
 int samplesCounter = 0; // The current number of samples
-uint16_t sampleArray[SAMPLE_ARRAY_SIZE]; // The data being sent to the base
+uint16_t sampleArray[SAMPLE_PACKET_SIZE]; // The data being sent to the base
 
 unsigned long int pingRecievedTime = 0; // Time of last ping
-char data[SAMPLE_ARRAY_SIZE];
+char data[SAMPLE_PACKET_SIZE];
 
 // Prototypes
 int getSample();
 void adcSetup();
 int registerToBase();
+void adcSetup();
+int getSample();
 void prepareDataForBase();
 
 void setup() {
@@ -51,7 +53,7 @@ void loop() {
 	// Is it time to sample new data? when the absolute time is bigger then the calculated sample time, then sample!
 	if (pingRecievedTime + samplesCounter * TIME_BETWEEN_SAMPLE < millis())
 	{
-		sampleArray[(samplesCounter++) % SAMPLE_ARRAY_SIZE] = getSample();
+		sampleArray[(samplesCounter++) % SAMPLE_PACKET_SIZE] = getSample();
 	}
 }
 
@@ -120,20 +122,20 @@ int getSample() {
 	return value;
 }
 
-// Function to send the correct base - even if we have sampled for than SAMPLE_ARRAY_SIZE and needs to correct the order
+// Function to send the correct base - even if we have sampled for than SAMPLE_PACKET_SIZE and needs to correct the order
 void prepareDataForBase()
 {
-	if (samplesCounter < SAMPLE_ARRAY_SIZE)
+	if (samplesCounter < SAMPLE_PACKET_SIZE)
 		return; // Nothing to worry about
-	if (samplesCounter >= SAMPLE_ARRAY_SIZE) // We might have overridden the beginning of the array
+	if (samplesCounter >= SAMPLE_PACKET_SIZE) // We might have overridden the beginning of the array
 	{
-		uint16_t tempSampleArray[SAMPLE_ARRAY_SIZE];
+		uint16_t tempSampleArray[SAMPLE_PACKET_SIZE];
 
 		int i = 0;
 		for (i; i < samplesCounter; i++) // Get the oldest data and add to beginning of temp array
-			tempSampleArray[i] = sampleArray[(samplesCounter + i) % SAMPLE_ARRAY_SIZE];
+			tempSampleArray[i] = sampleArray[(samplesCounter + i) % SAMPLE_PACKET_SIZE];
 		int k = 0;
-		for (int j = i; j < SAMPLE_ARRAY_SIZE; j++) // Add the rest of the data to temp array
+		for (int j = i; j < SAMPLE_PACKET_SIZE; j++) // Add the rest of the data to temp array
 			tempSampleArray[j] = sampleArray[k++];
 
 		memcpy(sampleArray, tempSampleArray, sizeof sampleArray); // Copy the temp into the "real" array

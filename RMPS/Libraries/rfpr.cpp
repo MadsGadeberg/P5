@@ -71,7 +71,7 @@ namespace rf {
 		uint8_t* array = bytearray + 1;
 		
 		// Copy data from samplePacket + 1 because we need to start at index 1 course index 0 is used for packet type
-		for (int i = 0; i < SAMPLE_ARRAY_SIZE; i++) {
+		for (int i = 0; i < SAMPLE_PACKET_SIZE; i++) {
 			array[i * 2] = (data.data[i] >> 8);
 			array[i * 2 + 1] = (data.data[i]);
 		
@@ -245,7 +245,7 @@ namespace rf {
 			struct SamplePacketVerified samplePacketVerified;
 			
 			uint8_t* array = data + 1;
-			for (int i = 0; i < SAMPLE_ARRAY_SIZE; i++) {
+			for (int i = 0; i < SAMPLE_PACKET_SIZE; i++) {
 				// Sets 2 most significant to the 2 most significant bits of the 10 bit data
 				uint8_t check = (array[i * 2] << 6);
 			
