@@ -56,37 +56,48 @@ void loop() {
 }
 
 void getData(uint8_t count, uint16_t delayMicros) {  
-  // Add temp buffer for sending - length 30 chooced by random
-  char sendData[30];
-  
   // Enable strain
   digitalWrite(PIN_STRAIN, LOW);
 
-  // Keep tracks of errors
-  int errors = 0;
-  
+  // Get start micros
+  uint32_t startMicros = micros();
+
+  // Get all samples
+  int samples[count];
   for (int i = 0; i < count; i++) {
-    // Get sample from strain
-    int sample = getSample();
-
-    // Update sendData
-    sprintf(sendData, "Måling: %d", sample);
-
-    // Send data and increment errors if not sending
-    if (!rf::hw_send((uint8_t*)sendData, strlen(sendData))) {
-      errors++;
-    }
+    // Get sample
+    samples[i] = getSample();
 
     // Delays selected micro seconds
     delayMicroseconds(delayMicros);
   }
 
+  // Get end micros
+  uint32_t endMicros = micros();
+
   // Disable strain
   digitalWrite(PIN_STRAIN, HIGH);
 
-  // Send errors
-  sprintf(sendData, "Fejl: %d", errors);
+  // Add temp buffer for sending - length 30 chooced by random
+  char sendData[30];
+
+  // Send info packages
+  sprintf(sendData, "Samples: %d", count);
   while (!rf::hw_sendWait((uint8_t*)sendData, strlen(sendData)));
+  sprintf(sendData, "Delay: %d", delayMicros);
+  while (!rf::hw_sendWait((uint8_t*)sendData, strlen(sendData)));
+  sprintf(sendData, "Time: %d", endMicros - startMicros);
+  while (!rf::hw_sendWait((uint8_t*)sendData, strlen(sendData)));
+
+
+  // Send all samples
+  for (int i = 0; i < count; i++) {
+    // Update sendData
+    sprintf(sendData, "%d", samples[i]);
+
+    // Send data
+    while (!rf::hw_sendWait((uint8_t*)sendData, strlen(sendData)));
+  }
 }
 
 void adcSetup() {

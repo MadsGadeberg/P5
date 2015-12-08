@@ -46,6 +46,7 @@ void printSampesToSerial();
 
 void setup() {
 	rf::hw_init((uint8_t)GROUP); // Initializing the RF module
+	delay(100); // Power up time (worst case from datasheet)
 
 	pinMode(RUNPIN, INPUT);
 	pinMode(LISTENPIN, INPUT);
