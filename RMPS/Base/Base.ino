@@ -18,7 +18,7 @@ typedef enum SystemStates { LISTENINGFORSATS, RUNMODE, STANDBY } SystemStates;
 SystemStates systemState = STANDBY;
 
 // connected satellites information
-int nrOfSatellitesConected = 0; // This value also shows how many connected satellites we have
+int nrOfSatellitesConected = 0; // This value also shows the next VID to assign to a satellite
 uint16_t connectedSatellites[MAX_CONNECTED_SATELLITES]; // the array that holds the RID of the connected satellites
 
 // satellite ping operation information
