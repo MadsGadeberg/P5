@@ -18,7 +18,7 @@ typedef enum SystemStates { LISTENINGFORSATS, RUNMODE, STANDBY } SystemStates;
 SystemStates systemState = STANDBY;
 
 // connected satellites information
-int nrOfSatellitesConected = 0; // This value also shows how many connected satellites we have
+int nrOfSatellitesConected = 0; // This value also shows the next VID to assign to a satellite
 uint16_t connectedSatellites[MAX_CONNECTED_SATELLITES]; // the array that holds the RID of the connected satellites
 
 // satellite ping operation information
@@ -37,7 +37,7 @@ LinkedList<LinkedList<rf::Sample>> dataSet;	// all data retrieved - Memmory issu
 
 // Prototypes
 void registerSatellite();
-void getDataFromSatellite();
+void getDataFromSatellite(int satelliteNr);
 void pingSatellite(int satelliteNr);
 void incrementSatellite();
 void checkForStateChange();
@@ -47,15 +47,16 @@ void printSampesToSerial();
 void setup() {
 	rf::hw_init((uint8_t)GROUP); // Initializing the RF module
 	delay(100); // Power up time (worst case from datasheet)
+	systemState = LISTENINGFORSATS; // Start listening for satellites
 
 	pinMode(RUNPIN, INPUT);
 	pinMode(LISTENPIN, INPUT);
 }
 
 void loop() {
-	if (LISTENINGFORSATS)
+	if (systemState == LISTENINGFORSATS)
 		registerSatellite();
-	else if (RUNMODE) {
+	else if (systemState == RUNMODE) {
 		int pingSequenceCount = pingSatelliteCount / nrOfSatellitesConected;		// the nr of ping sequences elapsed
 		int satelliteCount = pingSatelliteCount % nrOfSatellitesConected;			// the sattelite that needs to be pinged
 
