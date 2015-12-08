@@ -47,15 +47,16 @@ void printSampesToSerial();
 void setup() {
 	rf::hw_init((uint8_t)GROUP); // Initializing the RF module
 	delay(100); // Power up time (worst case from datasheet)
+	systemState = LISTENINGFORSATS; // Start listening for satellites
 
 	pinMode(RUNPIN, INPUT);
 	pinMode(LISTENPIN, INPUT);
 }
 
 void loop() {
-	if (LISTENINGFORSATS)
+	if (systemState == LISTENINGFORSATS)
 		registerSatellite();
-	else if (RUNMODE) {
+	else if (systemState == RUNMODE) {
 		int pingSequenceCount = pingSatelliteCount / nrOfSatellitesConected;		// the nr of ping sequences elapsed
 		int satelliteCount = pingSatelliteCount % nrOfSatellitesConected;			// the sattelite that needs to be pinged
 
