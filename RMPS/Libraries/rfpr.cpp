@@ -123,10 +123,10 @@ namespace rf {
 	
 	// Sends a samplePacket
 	bool pr_send(SamplePacket input) {
-		uint8_t bytearray[41];
+		uint8_t bytearray[(SAMPLE_PACKET_SIZE * 2) + 1];
 		getByteArrayForsamplePacket(input, bytearray);
 		
-		return hw_send(bytearray, 41);
+		return hw_send(bytearray, (SAMPLE_PACKET_SIZE * 2) + 1);
 	}
 	
 	// Sends a connect request with the specified RID
