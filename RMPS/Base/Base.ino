@@ -1,15 +1,15 @@
-#include "../Libraries/rfpr.h"
-#include "../Libraries/rfhw.h"
-#include "../Libraries/rfapp.h"
+#include "rfpr.h"
+#include "rfhw.h"
+#include "rfapp.h"
 #include <Arduino.h>
 #include <string.h>
 #include <LinkedList.h>
 
-#define RUNPIN 0
-#define LISTENPIN 1
+#define RUNPIN 3
+#define LISTENPIN 4
 #define MAX_CONNECTED_SATELLITES 10
 #define TIME_BETWEEN_PING_SEQUENCE 200
-#define TIME_OUT_TIME 18
+#define TIME_OUT_TIME 10
 
 // Enums
 typedef enum SystemStates { LISTENINGFORSATS, RUNMODE, STANDBY } SystemStates;
@@ -24,8 +24,8 @@ uint16_t connectedSatellites[MAX_CONNECTED_SATELLITES]; // the array that holds 
 														// satellite ping operation information
 unsigned long int runmodeInitiated = 0;  // the time runmode was initiated - used to calculate ping times
 unsigned long int pingSent = 0; // time of last ping sent
-int pingSatelliteCount = 0;		// The number of satellite pings since runModeInitiated
-int satellitePinged = 0;		// if the current sattelite have ben pinged - ping only once!
+int pingSatelliteCount = 0;   // The number of satellite pings since runModeInitiated
+int satellitePinged = 0;    // if the current sattelite have ben pinged - ping only once!
 
 // Data location
 struct rf::SamplePacketVerified *dataPacket;
@@ -37,7 +37,7 @@ LinkedList<LinkedList<rf::Sample>> dataSet;
 void registerSatellite();
 void getDataFromSatellites();
 void getDataFromSatellite(int satellite);
-void pingSatellite(int satellite);
+void pingSatellite(int satelliteNr);
 void incrementSatellite();
 void checkForStateChange();
 void initRunMode();
@@ -49,7 +49,6 @@ void setup() {
 	rf::hw_init((uint8_t)GROUP); // Initializing the RF module
 	delay(100); // Power up time (worst case from datasheet)
 	Serial.println("Init done");
-	systemState = LISTENINGFORSATS; // Start listening for satellites
 
 	pinMode(RUNPIN, INPUT);
 	pinMode(LISTENPIN, INPUT);
@@ -105,7 +104,10 @@ void getDataFromSatellites() {
 	int timeWindowStart = runmodeInitiated + (pingSequenceCount * TIME_BETWEEN_PING_SEQUENCE) + (satelliteToGetDataFrom * TIME_BETWEEN_PING);
 	int timeWindowEnd = timeWindowStart + TIME_OUT_TIME;
 
-
+	Serial.print("SatelliteNr: ");
+	Serial.println(satelliteToGetDataFrom);
+	Serial.print("pingSatCount: ");
+	Serial.println(pingSatelliteCount);
 	// if we are inside 
 	if ( timeWindowStart < time && time < timeWindowEnd)
 		getDataFromSatellite(satelliteToGetDataFrom);
@@ -118,7 +120,6 @@ void getDataFromSatellites() {
 			dataSet.get(satelliteToGetDataFrom).add(s);
 		}
 		incrementSatellite();
-	}
 }
 
 // pings sateellite for data and saves it to dataSet
@@ -130,29 +131,17 @@ void getDataFromSatellite(int satellite) {
 	// datasource for returned data
 	char data[SAMPLE_PACKET_SIZE];
 
-	Serial.print("I just pinged satellite number ");
-	Serial.println(satellite);
-
-	// IF data recieved
 	if (rf::pr_receive(data) == rf::DATA) {
-		Serial.println("Yay, I got data");
-		rf::SamplePacketVerified* samplePacket = (rf::SamplePacketVerified*) data;
+		Serial.print("Yay, I got data from satellite number ");
+		//rf::SamplePacketVerified* samplePacket = (rf::SamplePacketVerified*) data;
 
 		// save data to dataSet
-		for (int i = 0; i < SAMPLE_PACKET_SIZE; i++)
-			dataSet.get(satellite).add(samplePacket->data[i]);
+		/*for (int i = 0; i < SAMPLE_PACKET_SIZE; i++)
+		dataSet.get(satellite).add(samplePacket->data[i]);*/
 
-		incrementSatellite();
-	}
+		//Serial.println((samplePacket->data[12]).value);
 
-	// IF timeout
-	else if (pingSent + TIME_OUT_TIME < millis()) {  
-		// save invalid dummydata to dataSet
-		for (int i = 0; i < SAMPLE_PACKET_SIZE; i++) {
-			rf::Sample s;
-			s.valid = false;
-			dataSet.get(satellite).add(s);
-		}
+		Serial.println("Inc Data returned");
 		incrementSatellite();
 	}
 }
@@ -160,9 +149,13 @@ void getDataFromSatellite(int satellite) {
 // pings the satellite and the timer of the ping
 void pingSatellite(int satellite) {
 	rf::pr_send_ping((char)satellite);
+
 	pingSent = millis();
 
 	satellitePinged = 1;
+	/*Serial.print(" - Ping ");
+	Serial.print(satelliteNr);*/
+	Serial.print(".");
 }
 
 // Function that increments satellite
@@ -173,9 +166,9 @@ void incrementSatellite() {
 
 // function that checks for buttonpresses to change systemState
 void checkForStateChange() {
-	if (digitalRead(RUNPIN))      // Run button
+	if (digitalRead(LISTENPIN))      // Listen for satellites
 		systemState = LISTENINGFORSATS;
-	else if (digitalRead(LISTENPIN)) {  // Listen for satellites
+	else if (digitalRead(RUNPIN)) {  // Run button
 		initRunMode();
 	}
 }
