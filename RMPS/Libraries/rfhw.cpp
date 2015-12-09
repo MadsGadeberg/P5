@@ -164,8 +164,24 @@ namespace rf {
     	hw_sendCMD(0xCE00 | hw_filter); // SYNC=2DXX；
         
     	// AFC Command
+    	// Keep offset when VDI high
+    	// Range limit: no restriction
+    	// Disable AFC hi accurency mode
+    	// Enable AFC output register
+    	// Enable AFC function
     	hw_sendCMD(0xC483); // @PWR,NO RSTRIC,!st,!fi,OE,EN
+    	
+    	// TX Configuration Control Command
+    	// MP (no documentation off what that is - therefore off)
+    	// Frequency derivation: 90kHz
+    	// Output power: -0dBm (should be max according to RF12)
     	hw_sendCMD(0x9850); // !mp,90kHz,MAX OUT
+    	
+    	// PLL Setting Command
+    	// Selected uC CLK frequency: 2.5 MHz or less
+    	// Low power mode for crystal (bootup time is 2 ms (compared to 1 ms as fast time) but uses less power)
+    	// Disables the dithering in the PLL loop
+    	// Max bit rate: 256 kbps
     	hw_sendCMD(0xCC77); // OB1，OB0, LPX,！ddy，DDIT，BW0
     	
     	// Set state idle
