@@ -1,6 +1,6 @@
-#include "rfpr.h"
-#include "rfhw.h"
-#include "rfapp.h"
+#include "../Libraries/rfpr.h"
+#include "../Libraries/rfhw.h"
+#include "../Libraries/rfapp.h"
 #include <Arduino.h>
 #include <string.h>
 #include <LinkedList.h>
@@ -37,7 +37,7 @@ LinkedList<LinkedList<rf::Sample>> dataSet;	// all data retrieved - Memmory issu
 
 // Prototypes
 void registerSatellite();
-void getDataFromSatellite(int satelliteNr);
+void getDataFromSatellites(int satelliteNr);
 void pingSatellite(int satelliteNr);
 void incrementSatellite();
 void checkForStateChange();
@@ -57,12 +57,7 @@ void loop() {
 	if (systemState == LISTENINGFORSATS)
 		registerSatellite();
 	else if (systemState == RUNMODE) {
-		int pingSequenceCount = pingSatelliteCount / nrOfSatellitesConected;		// the nr of ping sequences elapsed
-		int satelliteCount = pingSatelliteCount % nrOfSatellitesConected;			// the sattelite that needs to be pinged
-
-		if (runmodeInitiated + (pingSequenceCount * TIME_BETWEEN_PING_SEQUENCE) + (satelliteCount * TIME_BETWEEN_PING) < millis()) {	// ping the satellite when the calculated ping time is smaller than the actual time.
-			getDataFromSatellite(satelliteCount);
-		}
+		getDataFromSatellites();
 	}
 	printSampesToSerial();
 
@@ -83,6 +78,8 @@ void registerSatellite()
 		uint16_t satelliteRID = (request->RID);
 		connectedSatellites[nrOfSatellitesConected] = satelliteRID;
 
+		// eventually delay to make sure Sat is in receiving state
+
 		// send confirmation
 		rf::pr_send_connectedConfirmation(satelliteRID, nrOfSatellitesConected);
 		
@@ -91,33 +88,42 @@ void registerSatellite()
 }
 
 // this function initiates a ping sequence.
-void getDataFromSatellite(int satelliteNr) {
+void getDataFromSatellites() {
 	char data[SAMPLE_PACKET_SIZE];
 
-	// ping satellite
-	if (satellitePinged == 0)
-		pingSatellite(satelliteNr);
+	// the nr of ping sequences elapsed
+	int pingSequenceCount = pingSatelliteCount / nrOfSatellitesConected;
+	// the sattelite that needs to be pinged
+	int satelliteToGetDataFrom = pingSatelliteCount % nrOfSatellitesConected;
 
-	// IF valid data returned
-	if (rf::pr_receive(data) == rf::DATA) { 	// check for responce
-		rf::SamplePacketVerified* samplePacket = (rf::SamplePacketVerified*) data;
+	// if we are in timeslice of the satelliteToGetDataFrom then ping and get data.
+	if (runmodeInitiated + (pingSequenceCount * TIME_BETWEEN_PING_SEQUENCE) + (satelliteToGetDataFrom * TIME_BETWEEN_PING) < millis()) {
+		
+		// ping satellite
+		if (satellitePinged == 0)
+			pingSatellite(satelliteToGetDataFrom);
 
-		// save data to dataSet
-		for (int i = 0; i < SAMPLE_PACKET_SIZE; i++)
-			dataSet.get(satelliteNr).add(samplePacket->data[i]);
+		// IF valid data returned
+		if (rf::pr_receive(data) == rf::DATA) { 	// check for responce
+			rf::SamplePacketVerified* samplePacket = (rf::SamplePacketVerified*) data;
 
-		incrementSatellite();
-	}
-	// If timeout
-	else if (pingSent + TIME_OUT_TIME < millis()) {  // timeout and data is marked as invalid
-		// save invalid dummydata to dataSet
-		for (int i = 0; i < SAMPLE_PACKET_SIZE; i++) {
-			rf::Sample s;
-			s.valid = false;
-			dataSet.get(satelliteNr).add(s);
+			// save data to dataSet
+			for (int i = 0; i < SAMPLE_PACKET_SIZE; i++)
+				dataSet.get(satelliteNr).add(samplePacket->data[i]);
+
+			incrementSatellite();
 		}
+		// If timeout
+		else if (pingSent + TIME_OUT_TIME < millis()) {  // timeout and data is marked as invalid
+			// save invalid dummydata to dataSet
+			for (int i = 0; i < SAMPLE_PACKET_SIZE; i++) {
+				rf::Sample s;
+				s.valid = false;
+				dataSet.get(satelliteNr).add(s);
+			}
 
-		incrementSatellite();
+			incrementSatellite();
+		}
 	}
 }
 
