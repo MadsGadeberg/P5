@@ -1,6 +1,6 @@
-#include "../Libraries/rfpr.h"
-#include "../Libraries/rfhw.h"
-#include "../Libraries/rfapp.h"
+#include "rfpr.h"
+#include "rfhw.h"
+#include "rfapp.h"
 #include <Arduino.h>
 
 // Constants
@@ -26,12 +26,12 @@ void prepareDataForBase();
 
 void setup() {
 	adcSetup();
-	//Serial.begin(57600);
-	//Serial.println("Hello!");
+	Serial.begin(57600);
+	Serial.println("Hello!");
 	pinMode(2, OUTPUT);
 	rf::hw_init((uint8_t)GROUP); // Initializing the RF module
 	delay(100); // Power up time (worst case from datasheet)
-				//Serial.println("Init done");
+	Serial.println("Init done");
 
 	while (myVID == -1) // TODO Implement timeout
 		myVID = registerToBase(); // Waiting for the base to acknowledge us, granting a VID
@@ -43,23 +43,19 @@ void loop() {
 	{
 		rf::packetTypes type = rf::pr_receive(data);
 		if (type == 2)
-			//Serial.println("***********************************************************************************************************************************************************************");
-			////Serial.println(type);
+		{
+			Serial.println("2");
+			// Start of new sample sequence
+			pingReceivedTime = millis();
+			samplesCounter = 0;
+			Serial.println("3");
 
-			if (type == 2)
-			{
-				//Serial.println("2");
-				// Start of new sample sequence
-				pingReceivedTime = millis();
-				samplesCounter = 0;
-				//Serial.println("3");
-
-				// Send dataPacket
-				prepareDataForBase();
-				//Serial.println("4");
-				rf::pr_send_samplePacket(sampleArray);
-				//Serial.println("5");
-			}
+			// Send dataPacket
+			prepareDataForBase();
+			Serial.println("4");
+			rf::pr_send_samplePacket(sampleArray);
+			Serial.println("5");
+		}
 	}
 
 	// Is it time to sample new data? when the absolute time is bigger then the calculated sample time, then sample!
@@ -85,8 +81,8 @@ int registerToBase() {
 			struct rf::ConnectedConfirmation *confirmation;
 			confirmation = (rf::ConnectedConfirmation*)data;
 			newVID = (confirmation->VID);
-			//Serial.print("Hey, I got this VID: ");
-			//Serial.println(newVID);
+			Serial.print("Hey, I got this VID: ");
+			Serial.println(newVID);
 		}
 	}
 
