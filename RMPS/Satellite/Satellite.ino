@@ -19,20 +19,22 @@ char data[SAMPLE_PACKET_SIZE];
 // Prototypes
 int getSample();
 void adcSetup();
-int registerToBase(bool sendRequest);
+int registerToBase();
 void adcSetup();
 int getSample();
 void prepareDataForBase();
 
 void setup() {
 	adcSetup();
+	//Serial.begin(57600);
+	//Serial.println("Hello!");
 	pinMode(2, OUTPUT);
 	rf::hw_init((uint8_t)GROUP); // Initializing the RF module
 	delay(100); // Power up time (worst case from datasheet)
+				//Serial.println("Init done");
 
-	registerToBase(true); // Send a connect request
 	while (myVID == -1) // TODO Implement timeout
-		myVID = registerToBase(false); // Waiting for the base to acknowledge us, granting a VID
+		myVID = registerToBase(); // Waiting for the base to acknowledge us, granting a VID
 }
 
 void loop() {
@@ -40,16 +42,24 @@ void loop() {
 	if (pingReceivedTime + TIME_BETWEEN_PING_SEQUENCE - SLEEP_TIME_THRESHOLD < millis()) // sleeptime threshold is the unsertainty of drift and other stuff
 	{
 		rf::packetTypes type = rf::pr_receive(data);
-		if (type == rf::PING && ((rf::Ping*)data)->VID == myVID)
-		{
-			// Start of new sample sequence
-			pingReceivedTime = millis();
-			samplesCounter = 0;
+		if (type == 2)
+			//Serial.println("***********************************************************************************************************************************************************************");
+			////Serial.println(type);
 
-			// send dataPacket
-			prepareDataForBase();
-			rf::pr_send_samplePacket(sampleArray);
-		}
+			if (type == 2)
+			{
+				//Serial.println("2");
+				// Start of new sample sequence
+				pingReceivedTime = millis();
+				samplesCounter = 0;
+				//Serial.println("3");
+
+				// Send dataPacket
+				prepareDataForBase();
+				//Serial.println("4");
+				rf::pr_send_samplePacket(sampleArray);
+				//Serial.println("5");
+			}
 	}
 
 	// Is it time to sample new data? when the absolute time is bigger then the calculated sample time, then sample!
@@ -60,18 +70,24 @@ void loop() {
 }
 
 // Function that sends the Real ID to the base and returns a Virtual ID if the base accepts our request
-int registerToBase(bool sendRequest) {
+int registerToBase() {
+	unsigned long int connectRequestSent;
 	uint16_t newVID = -1; // -1 indicates that no VID have been assigned
 
-	if (sendRequest)
-		rf::pr_send_connectRequest((uint16_t)RID);
+	rf::pr_send_connectRequest((uint16_t)RID);
+	connectRequestSent = millis();
 
-	rf::packetTypes type = rf::pr_receive(data);
-	if (type == rf::CONNECTED_CONFIRMATION)
+	while (millis() < connectRequestSent + 500 && myVID == -1) // Letting the base process connectRequest, and waiting a bit for the confirmation
 	{
-		struct rf::ConnectedConfirmation *confirmation;
-		confirmation = (rf::ConnectedConfirmation*)data;
-		newVID = (confirmation->VID);
+		rf::packetTypes type = rf::pr_receive(data);
+		if (type == rf::CONNECTED_CONFIRMATION)
+		{
+			struct rf::ConnectedConfirmation *confirmation;
+			confirmation = (rf::ConnectedConfirmation*)data;
+			newVID = (confirmation->VID);
+			//Serial.print("Hey, I got this VID: ");
+			//Serial.println(newVID);
+		}
 	}
 
 	return newVID;
