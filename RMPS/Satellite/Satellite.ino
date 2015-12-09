@@ -19,19 +19,20 @@ char data[SAMPLE_PACKET_SIZE];
 // Prototypes
 int getSample();
 void adcSetup();
-int registerToBase();
+int registerToBase(bool sendRequest);
 void adcSetup();
 int getSample();
 void prepareDataForBase();
 
 void setup() {
-    adcSetup();
+	adcSetup();
 	pinMode(2, OUTPUT);
 	rf::hw_init((uint8_t)GROUP); // Initializing the RF module
 	delay(100); // Power up time (worst case from datasheet)
-  
+
+	registerToBase(true); // Send a connect request
 	while (myVID == -1) // TODO Implement timeout
-		myVID = registerToBase(); // Waiting for the base to acknowledge us, granting a VID
+		myVID = registerToBase(false); // Waiting for the base to acknowledge us, granting a VID
 }
 
 void loop() {
@@ -59,10 +60,11 @@ void loop() {
 }
 
 // Function that sends the Real ID to the base and returns a Virtual ID if the base accepts our request
-int registerToBase(){
+int registerToBase(bool sendRequest) {
 	uint16_t newVID = -1; // -1 indicates that no VID have been assigned
 
-	rf::pr_send_connectRequest((uint16_t)RID);
+	if (sendRequest)
+		rf::pr_send_connectRequest((uint16_t)RID);
 
 	rf::packetTypes type = rf::pr_receive(data);
 	if (type == rf::CONNECTED_CONFIRMATION)
@@ -86,9 +88,9 @@ void adcSetup() {
 	// ADMUX - ADC Multiplexer Selection Register
 	ADMUX = (1 << MUX3); // Sets ADC0 as neg and ADC1 as pos input with a gain of 1
 
-	// ADCSRA - ADC Control and Status Register A
-	// ADEN enables adc
-	// ADPS 0:2 Controls the input clock to the adc
+						 // ADCSRA - ADC Control and Status Register A
+						 // ADEN enables adc
+						 // ADPS 0:2 Controls the input clock to the adc
 	ADCSRA = (1 << ADEN) | (1 << ADPS0) | (1 << ADPS1) | (1 << ADPS2);
 
 	// ADCSRB - ADC Control and Status Register B
@@ -103,9 +105,9 @@ void adcSetup() {
 
 // Function that reads input from strain gauge.
 int getSample() {
-    // Power Strain gauge circuit
-    digitalWrite(2, LOW);
-  
+	// Power Strain gauge circuit
+	digitalWrite(2, LOW);
+
 	// do single conversion
 	ADCSRA |= ((1 << ADSC) | (1 << ADIF));
 
@@ -116,9 +118,9 @@ int getSample() {
 	//Return the data
 	//get the first 2 lsb from ADCH and ADCL and return them as int
 	int value = (ADCL | ((ADCH & 0x03) << 8));
-  
-    // Cut power from strain gauge circuit
-    digitalWrite(2, HIGH);
+
+	// Cut power from strain gauge circuit
+	digitalWrite(2, HIGH);
 
 	return value;
 }
