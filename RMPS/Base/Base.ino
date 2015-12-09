@@ -39,7 +39,7 @@ LinkedList<LinkedList<rf::Sample>> dataSet;	// all data retrieved - Memmory issu
 void registerSatellite();
 void getDataFromSatellites();
 void getDataFromSatellite(int satellite);
-void pingSatellite(int satelliteNr);
+void pingSatellite(int satellite);
 void incrementSatellite();
 void checkForStateChange();
 void initRunMode();
@@ -130,8 +130,8 @@ void getDataFromSatellite(int satellite) {
 }
 
 // poings the satellite and the timer of the ping
-void pingSatellite(int satelliteNr) {
-	rf::pr_send_ping((char)satelliteNr);
+void pingSatellite(int satellite) {
+	rf::pr_send_ping((char)satellite);
 	pingSent = millis();
 	satellitePinged = 1;
 
