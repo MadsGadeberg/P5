@@ -24,8 +24,8 @@ uint16_t connectedSatellites[MAX_CONNECTED_SATELLITES]; // the array that holds 
 														// satellite ping operation information
 unsigned long int runmodeInitiated = 0;  // the time runmode was initiated - used to calculate ping times
 unsigned long int pingSent = 0; // time of last ping sent
-int pingSatelliteCount = 0;   // The number op satellite pings in lifetime of base
-int satellitePinged = 0;    // if the current sattelite have ben pinged - ping only once!
+int pingSatelliteCount = 0;		// The number of satellite pings since runModeInitiated
+int satellitePinged = 0;		// if the current sattelite have ben pinged - ping only once!
 
 							// Data location
 struct rf::SamplePacketVerified *dataPacket;
@@ -37,7 +37,8 @@ LinkedList<LinkedList<rf::Sample>> dataSet; // all data retrieved - Memmory issu
 
 											// Prototypes
 void registerSatellite();
-void getDataFromSatellite(int satelliteNr);
+void getDataFromSatellites();
+void getDataFromSatellite(int satellite);
 void pingSatellite(int satelliteNr);
 void incrementSatellite();
 void checkForStateChange();
@@ -64,14 +65,9 @@ void loop() {
 		Serial.println(nrOfSatellitesConected);
 	}
 
-	else if (systemState == RUNMODE) {
-		int pingSequenceCount = pingSatelliteCount / nrOfSatellitesConected;    // the nr of ping sequences elapsed
-		int satelliteCount = pingSatelliteCount % nrOfSatellitesConected;     // the sattelite that needs to be pinged
+	else if (systemState == RUNMODE)
+		getDataFromSatellites();
 
-		if (runmodeInitiated + (pingSequenceCount * TIME_BETWEEN_PING_SEQUENCE) + (satelliteCount * TIME_BETWEEN_PING) < millis()) {  // ping the satellite when the calculated ping time is smaller than the actual time.
-			getDataFromSatellite(satelliteCount);
-		}
-	}
 	printSampesToSerial();
 
 	checkForStateChange();
@@ -99,36 +95,49 @@ void registerSatellite()
 }
 
 // this function initiates a ping sequence.
-void getDataFromSatellite(int satelliteNr) {
-	char data[SAMPLE_PACKET_SIZE];
+void getDataFromSatellites() {
+	// the nr of Ping sequences elapsed
+	int pingSequenceCount = pingSatelliteCount / nrOfSatellitesConected;
+	// the sattelite that needs to be pinged in the current ping sequence
+	int satelliteToGetDataFrom = pingSatelliteCount % nrOfSatellitesConected;
 
+	// if we are in timeslice of the satelliteToGetDataFrom then ping and get data.
+	if (runmodeInitiated + (pingSequenceCount * TIME_BETWEEN_PING_SEQUENCE) + (satelliteToGetDataFrom * TIME_BETWEEN_PING) < millis())
+		getDataFromSatellite(satelliteToGetDataFrom);
+}
+
+// pings sateellite for data and saves it to dataSet
+void getDataFromSatellite(int satellite) {
 	// ping satellite
 	if (satellitePinged == 0)
-		pingSatellite(satelliteNr);
+		pingSatellite(satellite);
+
+	// datasource for returned data
+	char data[SAMPLE_PACKET_SIZE];
 
 	Serial.print("I just pinged satellite number ");
-	Serial.println(satelliteNr);
+	Serial.println(satellite);
 
 	// IF valid data returned
-	if (rf::pr_receive(data) == rf::DATA) {   // check for responce
+	if (rf::pr_receive(data) == rf::DATA) {
 		Serial.println("Yay, I got data");
 		rf::SamplePacketVerified* samplePacket = (rf::SamplePacketVerified*) data;
 
 		// save data to dataSet
 		for (int i = 0; i < SAMPLE_PACKET_SIZE; i++)
-			dataSet.get(satelliteNr).add(samplePacket->data[i]);
+			dataSet.get(satellite).add(samplePacket->data[i]);
 
 		incrementSatellite();
 	}
-	// If timeout
-	else if (pingSent + TIME_OUT_TIME < millis()) {  // timeout and data is marked as invalid
-													 // save invalid dummydata to dataSet
+
+	// timeout and data is marked as invalid
+	else if (pingSent + TIME_OUT_TIME < millis()) {  
+		// save invalid dummydata to dataSet
 		for (int i = 0; i < SAMPLE_PACKET_SIZE; i++) {
 			rf::Sample s;
 			s.valid = false;
-			dataSet.get(satelliteNr).add(s);
+			dataSet.get(satellite).add(s);
 		}
-
 		incrementSatellite();
 	}
 }
