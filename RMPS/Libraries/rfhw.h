@@ -5,5 +5,5 @@ namespace rf {
 	bool hw_send(uint8_t byte);
 	bool hw_send(const uint8_t buffer[], uint8_t len);
 	bool hw_sendWait(const uint8_t buffer[], uint8_t len);
-	uint8_t* hw_recieve(uint8_t* length);
+	uint8_t* hw_receive(uint8_t* length);
 }

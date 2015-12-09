@@ -2,7 +2,7 @@
 #include "Arduino.h"
 
 #define SEND_PACKET 85
-#define RECIEVE_SIZE 10
+#define receive_SIZE 10
 //#define WAIT 1
 
 uint8_t arraySend[SEND_PACKET];
@@ -26,11 +26,11 @@ void setup() {
 }
 
 void loop() {
-  // Recieve data
+  // receive data
   uint8_t len = 0;
-  volatile uint8_t* rdata = rf::hw_recieve(&len);
+  volatile uint8_t* rdata = rf::hw_receive(&len);
   if (rdata != NULL) {
-      if (len == RECIEVE_SIZE) {
+      if (len == receive_SIZE) {
         SendData();
       }
   }

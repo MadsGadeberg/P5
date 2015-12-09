@@ -2,11 +2,11 @@
 #include "Arduino.h"
 
 #define SEND_PACKET 10
-#define RECIEVE_SIZE 85
+#define receive_SIZE 85
 //#define WAIT 1
 
 uint8_t arraySend[SEND_PACKET];
-uint8_t arrayRecieve[RECIEVE_SIZE];
+uint8_t arrayreceive[receive_SIZE];
 uint32_t lastSendTime = 0;
 
 void setup() {
@@ -26,11 +26,11 @@ void setup() {
 }
 
 void loop() {
-  // Recieve data
+  // receive data
   uint8_t len = 0;
-  volatile uint8_t* rdata = rf::hw_recieve(&len);
+  volatile uint8_t* rdata = rf::hw_receive(&len);
   if (rdata != NULL) {
-    if (len == RECIEVE_SIZE) {
+    if (len == receive_SIZE) {
       uint32_t current = millis();
       
       int calculatedTime = current - lastSendTime;

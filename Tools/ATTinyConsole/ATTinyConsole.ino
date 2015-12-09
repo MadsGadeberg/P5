@@ -18,11 +18,11 @@ void setup() {
 }
 
 void loop() {
-  // Recieve data
+  // receive data
   uint8_t len = 0;
-  uint8_t* rdata = rf::hw_recieve(&len);
+  uint8_t* rdata = rf::hw_receive(&len);
   if (rdata != NULL) {
-      Serial.print("Recieved ");
+      Serial.print("received ");
       Serial.println(len);
       
       for (int i = 0; i < len; i++) {
