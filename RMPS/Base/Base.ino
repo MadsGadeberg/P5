@@ -94,9 +94,8 @@ void getDataFromSatellites() {
 	int satelliteToGetDataFrom = pingSatelliteCount % nrOfSatellitesConected;
 
 	// if we are in timeslice of the satelliteToGetDataFrom then ping and get data.
-	if (runmodeInitiated + (pingSequenceCount * TIME_BETWEEN_PING_SEQUENCE) + (satelliteToGetDataFrom * TIME_BETWEEN_PING) < millis()) {
+	if (runmodeInitiated + (pingSequenceCount * TIME_BETWEEN_PING_SEQUENCE) + (satelliteToGetDataFrom * TIME_BETWEEN_PING) < millis())
 		getDataFromSatellite(satelliteToGetDataFrom);
-	}
 }
 
 // pings sateellite for data and saves it to dataSet
