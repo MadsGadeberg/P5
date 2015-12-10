@@ -53,6 +53,8 @@ void setup() {
 
 	pinMode(RUNPIN, INPUT);
 	pinMode(LISTENPIN, INPUT);
+
+    Serial.print(SAMPLE_PACKET_SIZE);
 }
 
 void loop() {
@@ -117,22 +119,11 @@ void getDataFromSatellites() {
 	// caclulating the timewindow for satelliteToGetDataFrom.
 	unsigned long int timeWindowStart = runmodeInitiated + (pingSequenceCount * TIME_BETWEEN_PING_SEQUENCE) + (satelliteToGetDataFrom * TIME_BETWEEN_PING);
 	unsigned long int timeWindowEnd = timeWindowStart + TIME_OUT_TIME;
-
-  // For debug purposes - to be deleted
-    /*
-    Serial.print("S: ");
-    Serial.print(timeWindowStart);
-    Serial.print(" T: ");
-    Serial.print(time);
-    Serial.print(" E: ");
-    Serial.println(timeWindowEnd);
-    Serial.println();
-*/
-    Serial.print("mem: ");
-    Serial.println(freeMemory());
+    
 	// if we are inside in the timeslice of the current satellite to ping.
 	if ( timeWindowStart < time && time < timeWindowEnd)
 		getDataFromSatellite(satelliteToGetDataFrom);
+       
 	// If we didnt recieve data in the timeslice
 	else if (time >= timeWindowEnd) {
         Serial.print("TIMEOUT");
@@ -142,10 +133,6 @@ void getDataFromSatellites() {
 			s.valid = false;
 			dataSet.get(satelliteToGetDataFrom).add(s);
 		}
-        //Serial.print("Sat: ");
-        //Serial.print(satelliteToGetDataFrom);
-        //Serial.println(" IMEDOUT");
-        
 		incrementSatellite();
     }
 }
@@ -157,11 +144,10 @@ void getDataFromSatellite(int satellite) {
 		pingSatellite(satellite);
    
 	// datasource for returned data
-	char data[SAMPLE_PACKET_SIZE];
+	char data[SAMPLE_PACKET_SIZE*3];
 
 	if (false || rf::pr_receive(data) == rf::DATA) {
-        delay(5000);
-	    Serial.print("");
+	    Serial.print("after recieve");
         //Serial.print(" from satellite number ");
      
 		//rf::SamplePacketVerified* samplePacket = (rf::SamplePacketVerified*) data;
