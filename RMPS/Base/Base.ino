@@ -13,9 +13,6 @@
 #define TIME_BETWEEN_PING_SEQUENCE 200
 #define TIME_OUT_TIME 18
 
-// the size of the largest possible packet in Protocol Layer
-#define MAX_PACKET_SIZE sizeof(struct SamplePacketVerified)
-
 // Enums
 typedef enum SystemStates { LISTENINGFORSATS, RUNMODE, STANDBY } SystemStates;
 
@@ -140,7 +137,7 @@ void getDataFromSatellites() {
 	else if (time >= timeWindowEnd) {
         Serial.print("TIMEOUT");
 		// save invalid dummydata to dataSet
-		for (int i = 0; i < SAMPLE_PACKET_SIZE; i++) {
+		for (int i = 0; i < SAMPLES_PER_PACKET; i++) {
 			rf::Sample s;
 			s.valid = false;
 			dataSet.get(satelliteToGetDataFrom).add(s);
@@ -160,7 +157,7 @@ void getDataFromSatellite(int satellite) {
 		pingSatellite(satellite);
    
 	// datasource for returned data
-	char data[SAMPLE_PACKET_SIZE * 2 + 1];
+	char data[SAMPLE_PACKET_SIZE];
 
 	if (false || rf::pr_receive(data) == rf::DATA) {
         delay(5000);
@@ -170,7 +167,7 @@ void getDataFromSatellite(int satellite) {
 		//rf::SamplePacketVerified* samplePacket = (rf::SamplePacketVerified*) data;
 
 		// save data to dataSet
-		/*for (int i = 0; i < SAMPLE_PACKET_SIZE; i++)
+		/*for (int i = 0; i < SAMPLES_PER_PACKET; i++)
 		dataSet.get(satellite).add(samplePacket->data[i]);*/
 
 		//Serial.println((samplePacket->data[12]).value);
