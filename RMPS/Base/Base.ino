@@ -1,6 +1,8 @@
-#include "rfpr.h"
-#include "rfhw.h"
-#include "rfapp.h"
+#include <rfapp.h>
+#include <rfhw.h>
+#include <rfpr.h>
+#include <MemoryFree.h>
+
 #include <Arduino.h>
 #include <string.h>
 #include <LinkedList.h>
@@ -9,7 +11,10 @@
 #define LISTENPIN 4
 #define MAX_CONNECTED_SATELLITES 10
 #define TIME_BETWEEN_PING_SEQUENCE 200
-#define TIME_OUT_TIME 10
+#define TIME_OUT_TIME 18
+
+// the size of the largest possible packet in Protocol Layer
+#define MAX_PACKET_SIZE sizeof(struct SamplePacketVerified)
 
 // Enums
 typedef enum SystemStates { LISTENINGFORSATS, RUNMODE, STANDBY } SystemStates;
@@ -44,8 +49,7 @@ void initRunMode();
 void printSampesToSerial();
 
 void setup() {
-	Serial.begin(57600);
-	Serial.println("Hello!");
+	Serial.begin(250000);
 	rf::hw_init((uint8_t)GROUP); // Initializing the RF module
 	delay(100); // Power up time (worst case from datasheet)
 	Serial.println("Init done");
@@ -56,12 +60,7 @@ void setup() {
 
 void loop() {
 	if (systemState == LISTENINGFORSATS)
-	{
 		registerSatellite();
-		Serial.print("Checking for satellies. Current: ");
-		Serial.println(nrOfSatellitesConected);
-	}
-
 	else if (systemState == RUNMODE)
 		getDataFromSatellites();
 
@@ -71,8 +70,7 @@ void loop() {
 }
 
 // function that listens for incomming sattelite requests.
-void registerSatellite()
-{
+void registerSatellite(){
 	char data[SAMPLE_PACKET_SIZE];
 
 	// if data is of type request, ad it to base and send confirmation.
@@ -80,15 +78,34 @@ void registerSatellite()
 	{
 		// cast
 		struct rf::ConnectRequest *request = (rf::ConnectRequest*)data;
-		// save RID
+		
 		uint16_t satelliteRID = (request->RID);
-		connectedSatellites[nrOfSatellitesConected] = satelliteRID;
-
-		// send confirmation
-		rf::pr_send_connectedConfirmation(satelliteRID, nrOfSatellitesConected);
-
-		nrOfSatellitesConected++;
+        
+        // check if sat allready connected. Return already saved VID
+        if (satConnected(satelliteRID) != -1){
+            rf::pr_send_connectedConfirmation(satelliteRID, satConnected(satelliteRID));            
+        }
+        // If not save RID and return VID
+        else {
+            connectedSatellites[nrOfSatellitesConected] = satelliteRID;
+            // send confirmation
+            rf::pr_send_connectedConfirmation(satelliteRID, nrOfSatellitesConected);
+            Serial.print("Sattelite nr: ");
+            Serial.print(nrOfSatellitesConected);
+            Serial.println(" connected:");
+            nrOfSatellitesConected++;      
+        }
 	}
+}
+
+// function that checks if satellite is allready connected. Returns index if it is. -1 if not.
+int satConnected(int RID){
+    // iterate all connected satellites to see if RID is among them.
+    for (int i = 0 ; i < nrOfSatellitesConected; i++){
+        if (connectedSatellites[i] == RID)
+            return i;
+    }
+    return -1;
 }
 
 // this function initiates a ping sequence.
@@ -96,43 +113,60 @@ void getDataFromSatellites() {
 	unsigned long int time = millis();
 
 	// the nr of Ping sequences elapsed
-	int pingSequenceCount = pingSatelliteCount / nrOfSatellitesConected;
+	unsigned long int pingSequenceCount = nrOfSatellitesConected == 0 ? 0 : pingSatelliteCount / nrOfSatellitesConected;
 	// the sattelite that needs to be pinged in the current ping sequence
-	int satelliteToGetDataFrom = pingSatelliteCount % nrOfSatellitesConected;
+	unsigned long int satelliteToGetDataFrom = nrOfSatellitesConected == 0 ? 0 : pingSatelliteCount % nrOfSatellitesConected;
 
 	// caclulating the timewindow for satelliteToGetDataFrom.
-	int timeWindowStart = runmodeInitiated + (pingSequenceCount * TIME_BETWEEN_PING_SEQUENCE) + (satelliteToGetDataFrom * TIME_BETWEEN_PING);
-	int timeWindowEnd = timeWindowStart + TIME_OUT_TIME;
+	unsigned long int timeWindowStart = runmodeInitiated + (pingSequenceCount * TIME_BETWEEN_PING_SEQUENCE) + (satelliteToGetDataFrom * TIME_BETWEEN_PING);
+	unsigned long int timeWindowEnd = timeWindowStart + TIME_OUT_TIME;
 
-	Serial.print("SatelliteNr: ");
-	Serial.println(satelliteToGetDataFrom);
-	Serial.print("pingSatCount: ");
-	Serial.println(pingSatelliteCount);
-	// if we are inside 
+  // For debug purposes - to be deleted
+    /*
+    Serial.print("S: ");
+    Serial.print(timeWindowStart);
+    Serial.print(" T: ");
+    Serial.print(time);
+    Serial.print(" E: ");
+    Serial.println(timeWindowEnd);
+    Serial.println();
+*/
+    Serial.print("mem: ");
+    Serial.println(freeMemory());
+	// if we are inside in the timeslice of the current satellite to ping.
 	if ( timeWindowStart < time && time < timeWindowEnd)
 		getDataFromSatellite(satelliteToGetDataFrom);
-	// Response timeout
+	// If we didnt recieve data in the timeslice
 	else if (time >= timeWindowEnd) {
+        Serial.print("TIMEOUT");
 		// save invalid dummydata to dataSet
 		for (int i = 0; i < SAMPLE_PACKET_SIZE; i++) {
 			rf::Sample s;
 			s.valid = false;
 			dataSet.get(satelliteToGetDataFrom).add(s);
 		}
+        //Serial.print("Sat: ");
+        //Serial.print(satelliteToGetDataFrom);
+        //Serial.println(" IMEDOUT");
+        
 		incrementSatellite();
+    }
 }
 
-// pings sateellite for data and saves it to dataSet
+// pings satellite for data and saves it to dataSet
 void getDataFromSatellite(int satellite) {
 	// ping satellite
 	if (satellitePinged == 0)
 		pingSatellite(satellite);
-
+   
 	// datasource for returned data
-	char data[SAMPLE_PACKET_SIZE];
+	char data[SAMPLE_PACKET_SIZE * 2 + 1];
 
-	if (rf::pr_receive(data) == rf::DATA) {
-		Serial.print("Yay, I got data from satellite number ");
+	if (false || rf::pr_receive(data) == rf::DATA) {
+        delay(5000);
+	    Serial.print("");
+        //Serial.print(" from satellite number ");
+     
 		//rf::SamplePacketVerified* samplePacket = (rf::SamplePacketVerified*) data;
 
 		// save data to dataSet
@@ -141,7 +175,7 @@ void getDataFromSatellite(int satellite) {
 
 		//Serial.println((samplePacket->data[12]).value);
 
-		Serial.println("Inc Data returned");
+		//Serial.println("Inc Data returned");
 		incrementSatellite();
 	}
 }
@@ -149,13 +183,14 @@ void getDataFromSatellite(int satellite) {
 // pings the satellite and the timer of the ping
 void pingSatellite(int satellite) {
 	rf::pr_send_ping((char)satellite);
-
+    
+    Serial.print("Sat: ");
+    Serial.print(satellite);
+    Serial.println(" Pinged!");
+	
 	pingSent = millis();
 
 	satellitePinged = 1;
-	/*Serial.print(" - Ping ");
-	Serial.print(satelliteNr);*/
-	Serial.print(".");
 }
 
 // Function that increments satellite
@@ -187,6 +222,9 @@ void initRunMode() {
 	satellitePinged = 0;
 	pingSent = 0;
 	runmodeInitiated = millis();
+
+    // delay needed because else the runModeInitiatet is incrementing for unknown reason.
+    delay(500);
 }
 
 void printSampesToSerial() {
