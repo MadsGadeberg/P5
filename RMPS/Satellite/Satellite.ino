@@ -68,12 +68,12 @@ void loop() {
 // Function that sends the Real ID to the base and returns a Virtual ID if the base accepts our request
 int registerToBase() {
 	unsigned long int connectRequestSent;
-	uint16_t newVID = -1; // -1 indicates that no VID have been assigned
+	int newVID = -1; // -1 indicates that no VID have been assigned
 
 	rf::pr_send_connectRequest((uint16_t)RID);
 	connectRequestSent = millis();
 
-	while (millis() < connectRequestSent + 500 && myVID == -1) // Letting the base process connectRequest, and waiting a bit for the confirmation
+	while (millis() < connectRequestSent + 50 && myVID == -1) // Letting the base process connectRequest, and waiting a bit for the confirmation
 	{
 		rf::packetTypes type = rf::pr_receive(data);
 		if (type == rf::CONNECTED_CONFIRMATION)
