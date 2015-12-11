@@ -278,7 +278,7 @@ namespace rf {
 	}*/
 	
 	inline void hw_setStateTransmitter() {
-		hw_state = STATE_TX_BYTE0;//STATE_TX_PRE0;
+		hw_state = STATE_TX_BYTE1;//STATE_TX_PRE0;
 		
 		// Power Management Command
 		// Enable transmitter: &0x20
