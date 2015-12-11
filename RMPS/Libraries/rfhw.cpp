@@ -229,6 +229,7 @@ namespace rf {
 			if (state == STATE_TX_BYTE1) {
 				out = 0x2D;
 			} else if (state == STATE_TX_BYTE0) {
+				// Byte 0 is the filter set on initilize (Remember byte 1 is sent before byte 0 - see datasheet)
 				out = hw_filter;
 			} else if (state == STATE_TX_LEN) {
 				out = hw_buffer_len;
@@ -237,9 +238,17 @@ namespace rf {
 				// hw_buffer_len is 1 indexed
 				out = hw_buffer[state];
 			} else if (state == hw_buffer_len || state == STATE_TX_PRE0 || state == STATE_TX_PRE1 || state == STATE_TX_PRE2) {
-				// Also send 0xAA one time after all data is sent or the data is not received correctly (last byte replaced by random)
+				// Also send dummy 0xAA byte one time after all data is sent or the data is not received correctly
+				// It is possible to perform this sequence without sending a dummy byte (step i.) but after loading the last data byte to the transmit
+				// register the PA turn off should be delayed for at least 16 bits time. The clock source of the microcontroller (if the clock is not supplied
+				// by the RFM12B) should be stable enough over temperature and voltage to ensure this minimum delay under all
+				// operating circumstances. 
+				// From http://www.hoperf.com/upload/rf/rfm12b.pdf page 30
+				
+				// 0xAA chooced by RF12 and is also the default value used in the datasheet
 				out = 0xAA;
 			} else {
+				// Also send byte after RF going to sleep
 				out = 0xAA;
 			
 				// Sleep RF module
