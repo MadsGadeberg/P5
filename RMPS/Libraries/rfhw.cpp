@@ -38,8 +38,8 @@
 #define STATE_TX_PRE0	0xfa
 #define STATE_TX_PRE1	0xfb
 #define STATE_TX_PRE2	0xfc
-#define STATE_TX_BYTE0	0xfd
-#define STATE_TX_FILTER	0xfe
+#define STATE_TX_BYTE1	0xfd
+#define STATE_TX_BYTE0	0xfe
 #define STATE_TX_LEN	0xff
 
 #define STATE_IDLE 		0xf8
@@ -226,9 +226,9 @@ namespace rf {
 			// Read and update state
 			uint8_t state = hw_state++;
 			
-			if (state == STATE_TX_BYTE0) {
+			if (state == STATE_TX_BYTE1) {
 				out = 0x2D;
-			} else if (state == STATE_TX_FILTER) {
+			} else if (state == STATE_TX_BYTE0) {
 				out = hw_filter;
 			} else if (state == STATE_TX_LEN) {
 				out = hw_buffer_len;
