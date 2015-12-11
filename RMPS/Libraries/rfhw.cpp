@@ -340,7 +340,7 @@ namespace rf {
 		// Serial.println(hw_sendCMD(0x0000); & 0x0100 == 0);
 		// Remember to disable IRQ
 		
-		// Possible Race condition on hw_state and hw_buffer_index
+		// Possible Race condition on hw_state
 		if (hw_state == STATE_RX && hw_buffer_index == 0) {// && hw_sendCMDIRQ(0x0000) & 0x0100 == 0) {
 			// Set state to sleep - sets hw_state to IDLE
 			hw_setStateSleep();
