@@ -43,7 +43,7 @@ void loop() {
 	if (pingReceivedTime + TIME_BETWEEN_PING_SEQUENCE - SLEEP_TIME_THRESHOLD < millis()) // sleeptime threshold is the unsertainty of drift and other stuff
 	{
 		rf::packetTypes type = rf::pr_receive(data);
-		if (type == rf::CONNECTED_CONFIRMATION)
+		if (type == rf::PING)
 		{
 			// Start of new sample sequence
 			pingReceivedTime = millis();
