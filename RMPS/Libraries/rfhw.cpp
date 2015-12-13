@@ -84,13 +84,13 @@ namespace rf {
     		// SPR1 and SPR0 - Sets the SPI speed, 00 is fastest (4MHz) 11 is slowest (250KHz) (means it's in between) (&0x03)
     		// https://www.arduino.cc/en/Tutorial/SPIEEPROM
     		SPCR = _BV(SPE) | _BV(MSTR); 
-    		bitSet(SPCR, SPR0); // Not required -> Remove for faster transfer (see above comment)
+    		bitSet(SPCR, SPR0);
     		
     		// use clk/2 (2x 1/4th) for sending (and clk/8 for recv, see rf12_xferSlow)
     		// Comment from Jeelabs RF12
     		// SPI2x (Double SPI Speed) bit
     		// http://avrbeginners.net/architecture/spi/spi.html#spsr
-    		SPSR |= _BV(SPI2X); // Not required -> can be removed (slower speed)
+    		SPSR |= _BV(SPI2X);
     	#else
     		// ATTiny does not support  SPCR and SPSR
     		USICR = bit(USIWM0);
