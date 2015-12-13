@@ -32,18 +32,15 @@
 
 // MAX_LEN for packet
 // uint8_t used for states
-#define MAX_LEN 		0xf7 // Can be changed to minimize memory consumption
+#define MAX_LEN 		0xfa // Can be changed to minimize memory consumption
 
 // States
-#define STATE_TX_PRE0	0xfa
-#define STATE_TX_PRE1	0xfb
-#define STATE_TX_PRE2	0xfc
 #define STATE_TX_BYTE1	0xfd
 #define STATE_TX_BYTE0	0xfe
 #define STATE_TX_LEN	0xff
 
-#define STATE_IDLE 		0xf8
-#define STATE_RX 		0xf9
+#define STATE_IDLE 		0xfb
+#define STATE_RX 		0xfc
 
 namespace rf {
 	volatile uint8_t hw_state = STATE_IDLE;
@@ -237,7 +234,7 @@ namespace rf {
 				// state is 0 indexed
 				// hw_buffer_len is 1 indexed
 				out = hw_buffer[state];
-			} else if (state == hw_buffer_len || state == STATE_TX_PRE0 || state == STATE_TX_PRE1 || state == STATE_TX_PRE2) {
+			} else if (state == hw_buffer_len) {
 				// Also send dummy 0xAA byte one time after all data is sent or the data is not received correctly
 				// It is possible to perform this sequence without sending a dummy byte (step i.) but after loading the last data byte to the transmit
 				// register the PA turn off should be delayed for at least 16 bits time. The clock source of the microcontroller (if the clock is not supplied
@@ -287,7 +284,7 @@ namespace rf {
 	}*/
 	
 	inline void hw_setStateTransmitter() {
-		hw_state = STATE_TX_BYTE1;//STATE_TX_PRE0;
+		hw_state = STATE_TX_BYTE1;
 		
 		// Power Management Command
 		// Enable transmitter: &0x20
