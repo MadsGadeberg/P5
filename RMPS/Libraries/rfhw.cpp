@@ -8,16 +8,16 @@
 // SPI ports - change according to processor
 // Arduino is SPI master
 #if defined(__AVR_ATtiny84__)
-	#define RFM_IRQ     	8	// IRQ port needs to be equal to interrupt no 0
+	#define RFM_IRQ     	8	// IRQ port (INT0)
 
-	#define SPI_SS      	9 	// Slave select -> Can be changed to another port if needed - pin 3
+	#define SPI_SS      	9 	// Slave select -> Can be changed - pin 3
 	#define SPI_MOSI    	5 	// Master out -> Slave in - Pin 7
 	#define SPI_MISO    	6 	// Master in -> Slave out - Pin 8
 	#define SPI_SCK     	4 	// Clock - Pin 9
 #else
-	#define RFM_IRQ     	2	// IRQ port needs to be equal to interrupt no 0
+	#define RFM_IRQ     	2	// IRQ port (INT0)
 
-	#define SPI_SS      	10 	// Slave select -> Can be changed to another port if needed
+	#define SPI_SS      	10 	// Slave select -> Can be changed
 	#define SPI_MOSI    	11 	// Master out -> Slave in
 	#define SPI_MISO    	12 	// Master in -> Slave out
 	#define SPI_SCK     	13 	// Clock
