@@ -11,6 +11,7 @@
 #define LISTENPIN 4
 #define MAX_CONNECTED_SATELLITES 10
 #define TIME_BETWEEN_PING_SEQUENCE 200
+using namespace rf;
 
 // Enums
 typedef enum SystemStates { LISTENINGFORSATS, RUNMODE, STANDBY } SystemStates;
@@ -29,10 +30,10 @@ int pingSatelliteCount = 0;   // The number of satellite pings since runModeInit
 int satellitePinged = 0;    // if the current sattelite have ben pinged - ping only once!
 
 // Data location
-struct rf::SamplePacketVerified *dataPacket;
-rf::SamplePacketVerified *samplePacketArray[8];
+struct SamplePacketVerified *dataPacket;
+SamplePacketVerified *samplePacketArray[8];
 // all data retrieved - Memmory issues at some point!!!!!!
-LinkedList<LinkedList<rf::Sample>> dataSet;
+LinkedList<LinkedList<Sample>> dataSet;
 
 // Debug Data allocation
 LinkedList<int> recieveTimes;
@@ -51,7 +52,7 @@ void printSampesToSerial();
 
 void setup() {
 	Serial.begin(250000);
-	rf::hw_init((uint8_t)GROUP); // Initializing the RF module
+	hw_init((uint8_t)GROUP); // Initializing the RF module
 	delay(100); // Power up time (worst case from datasheet)
 	Serial.println("Init done");
 
@@ -74,16 +75,16 @@ void registerSatellite(){
 	char data[SAMPLE_PACKET_SIZE];
 
 	// if data is of type request, ad it to base and send confirmation.
-	if (rf::pr_receive(data) == rf::CONNECT_REQUEST)
+	if (pr_receive(data) == CONNECT_REQUEST)
 	{
 		// cast
-		struct rf::ConnectRequest *request = (rf::ConnectRequest*)data;
+		struct ConnectRequest *request = (ConnectRequest*)data;
 		
 		uint16_t satelliteRID = (request->RID);
         
         // check if sat allready connected. Return already saved VID
         if (satConnected(satelliteRID) != -1){
-            rf::pr_send_connectedConfirmation(satelliteRID, satConnected(satelliteRID)); 
+            pr_send_connectedConfirmation(satelliteRID, satConnected(satelliteRID)); 
             Serial.print("Satt ");
             Serial.print(satConnected(satelliteRID));
             Serial.println(" REconnected");           
@@ -92,7 +93,7 @@ void registerSatellite(){
         else {
             connectedSatellites[nrOfSatellitesConected] = satelliteRID;
             // send confirmation
-            rf::pr_send_connectedConfirmation(satelliteRID, nrOfSatellitesConected);
+            pr_send_connectedConfirmation(satelliteRID, nrOfSatellitesConected);
             Serial.print("Satt ");
             Serial.print(nrOfSatellitesConected);
             Serial.println(" connected");
@@ -141,14 +142,14 @@ void getDataFromSatellite(int satellite) {
 	// datasource for returned data
 	char data[SAMPLE_PACKET_VERIFIED_SIZE];
 
-	if (rf::pr_receive(data) == rf::DATA) {
-        rf::SamplePacketVerified* samplePacket = (rf::SamplePacketVerified*) data;
+	if (pr_receive(data) == DATA) {
+        SamplePacketVerified* samplePacket = (SamplePacketVerified*) data;
         
 		// save data to dataSet
 		for (int i = 0; i < SAMPLES_PER_PACKET; i++){
 
             // get the samples
-            LinkedList<rf::Sample> samples = dataSet.get(satellite);
+            LinkedList<Sample> samples = dataSet.get(satellite);
             
             // add samples to the samples
             samples.add(samplePacket->data[i]);
@@ -196,7 +197,7 @@ void getDataFromSatellite(int satellite) {
 void logTimeout(int satellite){
         // save invalid dummydata to dataSet
         for (int i = 0; i < SAMPLES_PER_PACKET; i++) {
-            rf::Sample s;
+            Sample s;
             s.valid = false;
             dataSet.get(satellite).add(s);
         }
@@ -205,7 +206,7 @@ void logTimeout(int satellite){
 
 // pings the satellite and the timer of the ping
 void pingSatellite(int satellite) {
-	rf::pr_send_ping((char)satellite);	
+	pr_send_ping((char)satellite);	
     pingTime = millis();
     //Serial.println("____________________");
     //Serial.print("Sat ");
@@ -265,7 +266,7 @@ void initRunMode() {
 
     // create Sample lists for all connected satellites
 	for (int i = 0; i < nrOfSatellitesConected; i++)
-		dataSet.add(LinkedList<rf::Sample>());
+		dataSet.add(LinkedList<Sample>());
 
 	systemState = RUNMODE;
 	// resetting ping counts
@@ -296,7 +297,7 @@ void printSampesToSerial() {
         //dataSet.get(i).get(indexCorrectedSampleToPrint).value = 10;
         //dataSet.get(satellite).add(samplePacket->data[i]);
         
-        rf::Sample sample = dataSet.get(i).get(indexCorrectedSampleToPrint);
+        Sample sample = dataSet.get(i).get(indexCorrectedSampleToPrint);
 
         //Serial.print("Sat ");
         //Serial.print(i);
