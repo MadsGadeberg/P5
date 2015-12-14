@@ -8,16 +8,16 @@
 // SPI ports - change according to processor
 // Arduino is SPI master
 #if defined(__AVR_ATtiny84__)
-	#define RFM_IRQ     	8	// IRQ port needs to be equal to interrupt no 0
+	#define RFM_IRQ     	8	// IRQ port (INT0)
 
-	#define SPI_SS      	9 	// Slave select -> Can be changed to whatever port needed - pin 3
-	#define SPI_MOSI    	5 	// Master out -> Slave in - Pin 7 - Reversed?
+	#define SPI_SS      	9 	// Slave select -> Can be changed - pin 3
+	#define SPI_MOSI    	5 	// Master out -> Slave in - Pin 7
 	#define SPI_MISO    	6 	// Master in -> Slave out - Pin 8
 	#define SPI_SCK     	4 	// Clock - Pin 9
 #else
-	#define RFM_IRQ     	2	// IRQ port needs to be equal to interrupt no 0
+	#define RFM_IRQ     	2	// IRQ port (INT0)
 
-	#define SPI_SS      	10 	// Slave select -> Can be changed to whatever port needed
+	#define SPI_SS      	10 	// Slave select -> Can be changed
 	#define SPI_MOSI    	11 	// Master out -> Slave in
 	#define SPI_MISO    	12 	// Master in -> Slave out
 	#define SPI_SCK     	13 	// Clock
@@ -32,18 +32,15 @@
 
 // MAX_LEN for packet
 // uint8_t used for states
-#define MAX_LEN 		0xf7 // Can be changed to minimize memory consumption
+#define MAX_LEN 		0xfa // Can be changed to minimize memory consumption
 
 // States
-#define STATE_TX_PRE0	0xfa
-#define STATE_TX_PRE1	0xfb
-#define STATE_TX_PRE2	0xfc
-#define STATE_TX_BYTE0	0xfd
-#define STATE_TX_FILTER	0xfe
+#define STATE_TX_BYTE1	0xfd
+#define STATE_TX_BYTE0	0xfe
 #define STATE_TX_LEN	0xff
 
-#define STATE_IDLE 		0xf8
-#define STATE_RX 		0xf9
+#define STATE_IDLE 		0xfb
+#define STATE_RX 		0xfc
 
 namespace rf {
 	volatile uint8_t hw_state = STATE_IDLE;
@@ -87,13 +84,13 @@ namespace rf {
     		// SPR1 and SPR0 - Sets the SPI speed, 00 is fastest (4MHz) 11 is slowest (250KHz) (means it's in between) (&0x03)
     		// https://www.arduino.cc/en/Tutorial/SPIEEPROM
     		SPCR = _BV(SPE) | _BV(MSTR); 
-    		bitSet(SPCR, SPR0); // Not required -> Remove for faster transfer (see above comment)
+    		bitSet(SPCR, SPR0);
     		
     		// use clk/2 (2x 1/4th) for sending (and clk/8 for recv, see rf12_xferSlow)
     		// Comment from Jeelabs RF12
     		// SPI2x (Double SPI Speed) bit
     		// http://avrbeginners.net/architecture/spi/spi.html#spsr
-    		SPSR |= _BV(SPI2X); // Not required -> can be removed (slower speed)
+    		SPSR |= _BV(SPI2X);
     	#else
     		// ATTiny does not support  SPCR and SPSR
     		USICR = bit(USIWM0);
@@ -226,9 +223,10 @@ namespace rf {
 			// Read and update state
 			uint8_t state = hw_state++;
 			
-			if (state == STATE_TX_BYTE0) {
+			if (state == STATE_TX_BYTE1) {
 				out = 0x2D;
-			} else if (state == STATE_TX_FILTER) {
+			} else if (state == STATE_TX_BYTE0) {
+				// Byte 0 is the filter set on initilize (Remember byte 1 is sent before byte 0 - see datasheet)
 				out = hw_filter;
 			} else if (state == STATE_TX_LEN) {
 				out = hw_buffer_len;
@@ -236,10 +234,18 @@ namespace rf {
 				// state is 0 indexed
 				// hw_buffer_len is 1 indexed
 				out = hw_buffer[state];
-			} else if (state == hw_buffer_len || state == STATE_TX_PRE0 || state == STATE_TX_PRE1 || state == STATE_TX_PRE2) {
-				// Also send 0xAA one time after all data is sent or the data is not received correctly (last byte replaced by random)
+			} else if (state == hw_buffer_len) {
+				// Also send dummy 0xAA byte one time after all data is sent or the data is not received correctly
+				// It is possible to perform this sequence without sending a dummy byte (step i.) but after loading the last data byte to the transmit
+				// register the PA turn off should be delayed for at least 16 bits time. The clock source of the microcontroller (if the clock is not supplied
+				// by the RFM12B) should be stable enough over temperature and voltage to ensure this minimum delay under all
+				// operating circumstances. 
+				// From http://www.hoperf.com/upload/rf/rfm12b.pdf page 30
+				
+				// 0xAA chooced by RF12 and is also the default value used in the datasheet
 				out = 0xAA;
 			} else {
+				// Also send byte after RF going to sleep
 				out = 0xAA;
 			
 				// Sleep RF module
@@ -278,7 +284,7 @@ namespace rf {
 	}*/
 	
 	inline void hw_setStateTransmitter() {
-		hw_state = STATE_TX_BYTE0;//STATE_TX_PRE0;
+		hw_state = STATE_TX_BYTE1;
 		
 		// Power Management Command
 		// Enable transmitter: &0x20
@@ -340,7 +346,7 @@ namespace rf {
 		// Serial.println(hw_sendCMD(0x0000); & 0x0100 == 0);
 		// Remember to disable IRQ
 		
-		// Possible Race condition on hw_state and hw_buffer_index
+		// Possible Race condition on hw_state
 		if (hw_state == STATE_RX && hw_buffer_index == 0) {// && hw_sendCMDIRQ(0x0000) & 0x0100 == 0) {
 			// Set state to sleep - sets hw_state to IDLE
 			hw_setStateSleep();

@@ -31,7 +31,8 @@ void setup() {
 	pinMode(2, OUTPUT);
 	rf::hw_init((uint8_t)GROUP); // Initializing the RF module
 	delay(100); // Power up time (worst case from datasheet)
-	Serial.println("Init done");
+	Serial.print("My RID is: ");
+	Serial.println(RID);
 
 	while (myVID == -1) // TODO Implement timeout
 		myVID = registerToBase(); // Waiting for the base to acknowledge us, granting a VID
@@ -42,19 +43,15 @@ void loop() {
 	if (pingReceivedTime + TIME_BETWEEN_PING_SEQUENCE - SLEEP_TIME_THRESHOLD < millis()) // sleeptime threshold is the unsertainty of drift and other stuff
 	{
 		rf::packetTypes type = rf::pr_receive(data);
-		if (type == 2)
+		if (type == rf::PING)
 		{
-			Serial.println("2");
 			// Start of new sample sequence
 			pingReceivedTime = millis();
 			samplesCounter = 0;
-			Serial.println("3");
 
 			// Send dataPacket
 			prepareDataForBase();
-			Serial.println("4");
 			rf::pr_send_samplePacket(sampleArray);
-			Serial.println("5");
 		}
 	}
 
@@ -81,7 +78,7 @@ int registerToBase() {
 			struct rf::ConnectedConfirmation *confirmation;
 			confirmation = (rf::ConnectedConfirmation*)data;
 			newVID = (confirmation->VID);
-			Serial.print("Hey, I got this VID: ");
+			Serial.print("My VID is: ");
 			Serial.println(newVID);
 		}
 	}
