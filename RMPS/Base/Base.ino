@@ -1,11 +1,8 @@
+#include <Arduino.h>
+#include <QueueArray.h>
 #include <rfapp.h>
 #include <rfhw.h>
 #include <rfpr.h>
-#include <MemoryFree.h>
-
-#include <Arduino.h>
-#include <string.h>
-#include <LinkedList.h>
 
 #define RUNPIN 3
 #define LISTENPIN 4
@@ -18,19 +15,17 @@ typedef enum SystemStates { LISTENINGFORSATS, RUNMODE, STANDBY } SystemStates;
 
 // the state of the base
 SystemStates systemState = STANDBY;
-
 // connected satellites information
 int nrOfSatellitesConected = 0; // This value also shows the next VID to assign to a satellite
 uint16_t connectedSatellites[MAX_CONNECTED_SATELLITES]; // the array that holds the RID of the connected satellites
-
 // satellite ping operation information
 unsigned long int runmodeInitiated = 0;  // the time runmode was initiated - used to calculate ping times
-//unsigned long int pingSent = 0; // time of last ping sent
-int pingSatelliteCount = 0;   // The number of satellite pings since runModeInitiated
-int satellitePinged = 0;    // if the current sattelite have ben pinged - ping only once!
+unsigned long int pingSatelliteCount = 0;   // The number of satellite pings since runModeInitiated
+bool satellitePinged = 0;    // if the current sattelite have ben pinged - ping only once!
+unsigned long int pingSequenceCount;
 
-// Data location
-struct SamplePacketVerified *dataPacket;
+QueueArray<Sample> samples[MAX_CONNECTED_SATELLITES];
+
 // Prototypes
 void registerSatellite();
 void getDataFromSatellites();
@@ -56,7 +51,9 @@ void loop() {
 		registerSatellite();
 	else if (systemState == RUNMODE){
 		getDataFromSatellites();
+	    printSamples();
 	}
+
 	checkForStateChange();
 }
 
@@ -75,16 +72,14 @@ void registerSatellite(){
         // check if sat allready connected. Return already saved VID
         if (satConnected(satelliteRID) != -1){
             pr_send_connectedConfirmation(satelliteRID, satConnected(satelliteRID)); 
-            Serial.print("Satt ");
-            Serial.print(satConnected(satelliteRID));
-            Serial.println(" REconnected");           
+            Serial.print("Satellite "); Serial.print(satConnected(satelliteRID)); Serial.println(" REconnected");           
         }
         // If not save RID and return VID
         else {
             connectedSatellites[nrOfSatellitesConected] = satelliteRID;
             // send confirmation
             pr_send_connectedConfirmation(satelliteRID, nrOfSatellitesConected);
-            Serial.print("Satt ");
+            Serial.print("Satellite ");
             Serial.print(nrOfSatellitesConected);
             Serial.println(" connected");
             nrOfSatellitesConected++;      
@@ -106,7 +101,7 @@ int satConnected(int RID){
 void getDataFromSatellites() {
 	unsigned long int time = millis();
 	// the nr of Ping sequences elapsed
-	unsigned long int pingSequenceCount = nrOfSatellitesConected == 0 ? 0 : pingSatelliteCount / nrOfSatellitesConected;
+	pingSequenceCount = nrOfSatellitesConected == 0 ? 0 : pingSatelliteCount / nrOfSatellitesConected;
 	// the sattelite that needs to be pinged in the current ping sequence
 	unsigned long int satelliteToGetDataFrom = nrOfSatellitesConected == 0 ? 0 : pingSatelliteCount % nrOfSatellitesConected;
 
@@ -135,25 +130,31 @@ void getDataFromSatellite(int satellite) {
 	char data[SAMPLE_PACKET_VERIFIED_SIZE];
 
 	if (pr_receive(data) == DATA) {
-        //Serial.println("                             recieve: ");
-    
-        SamplePacketVerified* samplePacket = (SamplePacketVerified*) data;
-
+        Serial.println("                             recieve: ");
+        SamplePacketVerified* tmpSamples = (SamplePacketVerified*) data;
+        for(int i = 0; i< SAMPLES_PER_PACKET; i++){
+            samples[satellite].enqueue(tmpSamples->data[i]);
+        }
 		incrementSatellite();
 	}
 }
 
 // when timeout occurs save invalid data in data structure and increment satt
 void logTimeout(int satellite){
-        //Serial.println("                             timeout: ");
+        Serial.println("                             timeout: ");
         // save invalid dummydata to dataSet
-
+        for(int i = 0; i< SAMPLES_PER_PACKET; i++){
+            Sample s;
+            s.valid = false;
+            samples[satellite].enqueue(s);
+        }
         incrementSatellite();
 }
 
 // pings the satellite and the timer of the ping
 void pingSatellite(int satellite) {
 	pr_send_ping((char)satellite);	
+    Serial.println("                             pinged: ");
     //pingSent = millis();
     //Serial.println("____________________");
     //Serial.print("Sat ");
@@ -194,6 +195,7 @@ void checkForStateChange() {
 
 // setting Listening for sats configuration
 void initListeningForSatsMode(){
+        delay(500);
         systemState = LISTENINGFORSATS;
 
         // clear all connected satellites
@@ -203,20 +205,45 @@ void initListeningForSatsMode(){
         
         Serial.println("________________________________________________");
         Serial.println("Listening for sats");
-        delay(500);
 }
 
 // setting runmode configuration.
 void initRunMode() {
-
+    delay(500);
 	systemState = RUNMODE;
 	// resetting ping counts
 	pingSatelliteCount = 0;
 	satellitePinged = 0;
 	//pingSent = 0;
 	runmodeInitiated = millis();
-
-    Serial.println("________________________________________________");
+    
+    syncSamples();
     Serial.println("runmode initiated");
+}
+
+// this function as padding samples to our samplequeue to make sure that the saved samples is syncronized.
+void syncSamples(){
+    for (int i = 0; i < nrOfSatellitesConected; i++){
+        int samplesToAdd = i * SAMPLES_BETWEEN_PINGS;
+        for (int j = 0; j < samplesToAdd; j++)
+            samples[i].enqueue(Sample());    
+    }
+}
+
+void printSamples(){
+    unsigned long int timeFromRunModeInitiated = (millis() - runmodeInitiated) < 0 ? 0 : (millis() - runmodeInitiated);
+    Serial.print("timeFromRunmodeInit: ");Serial.println(timeFromRunModeInitiated);
+    //int sampleDelay = 1000 / TIIME_BETWEEN_PING;
+
+    // after 1 second we start to print samples from queue
+    if (timeFromRunModeInitiated > 50){
+        
+        // check if there are samples to print
+        if (samples[0].isEmpty() == false){
+            for(int satellite = 0; satellite < nrOfSatellitesConected; satellite++){
+                Serial.println(samples[satellite].dequeue().value);
+            }
+        }
+    }
 }
 
