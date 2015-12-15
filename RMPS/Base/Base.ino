@@ -51,7 +51,7 @@ void printSampesToSerial();
 
 void setup() {
 	Serial.begin(250000);
-	rf::hw_init((uint8_t)GROUP); // Initializing the RF module
+	rf::phy_init((uint8_t)GROUP); // Initializing the RF module
 	delay(100); // Power up time (worst case from datasheet)
 	Serial.println("Init done");
 

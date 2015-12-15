@@ -43,30 +43,30 @@
 #define STATE_RX 		0xfc
 
 namespace rf {
-	volatile uint8_t hw_state = STATE_IDLE;
-	uint8_t hw_buffer[MAX_LEN];
-	volatile uint8_t hw_buffer_index = 0;
-	volatile uint8_t hw_buffer_len = 0;
+	volatile uint8_t phy_state = STATE_IDLE;
+	uint8_t phy_buffer[MAX_LEN];
+	volatile uint8_t phy_buffer_index = 0;
+	volatile uint8_t phy_buffer_len = 0;
 	
 	uint8_t hw_filter;
 	
-	static void hw_interrupt();
-	void hw_enableRF();
-	void hw_disableRF();
-	void hw_setStatereceive();
-	void hw_setStateIdle();
-	void hw_setStateTransmitter();
-	void hw_setStateSleep();
-	void hw_initSPI();
-	void hw_enableIRQ();
-	void hw_disableIRQ();
-	bool hw_canSend();
-	uint16_t hw_sendCMD(uint16_t command);
-	uint16_t hw_sendCMDIRQ(uint16_t command);
-	uint8_t hw_sendCMDByte(uint8_t out);
+	static void phy_interrupt();
+	void phy_enableRF();
+	void phy_disableRF();
+	void phy_setStatereceive();
+	void phy_setStateIdle();
+	void phy_setStateTransmitter();
+	void phy_setStateSleep();
+	void phy_initSPI();
+	void phy_enableIRQ();
+	void phy_disableIRQ();
+	bool phy_canSend();
+	uint16_t phy_sendCMD(uint16_t command);
+	uint16_t phy_sendCMDIRQ(uint16_t command);
+	uint8_t phy_sendCMDByte(uint8_t out);
 
 	// Init spi
-	inline void hw_initSPI() {
+	inline void phy_initSPI() {
 		// Set pinmodes for SPI and IRQ
 		pinMode(SPI_SS, OUTPUT);
 		pinMode(SPI_MOSI, OUTPUT);
@@ -75,7 +75,7 @@ namespace rf {
     	pinMode(RFM_IRQ, INPUT);
     	
     	// Disable RF (SPI)
-    	hw_disableRF();
+    	phy_disableRF();
     	
     	#ifdef SPCR
     		// 0x51
@@ -100,38 +100,38 @@ namespace rf {
     	digitalWrite(RFM_IRQ, HIGH);
 	}
 	
-	void hw_init(uint8_t byte_filter) {
+	void phy_init(uint8_t byte_filter) {
 		// Set filter
 		hw_filter = byte_filter;
 	
 		// Init SPI
-		hw_initSPI();
+		phy_initSPI();
     
-    	hw_sendCMD(0x0000); // initial SPI transfer added to avoid power-up problem
-    	hw_setStateSleep();
+    	phy_sendCMD(0x0000); // initial SPI transfer added to avoid power-up problem
+    	phy_setStateSleep();
 
     	// wait until RFM12B is out of power-up reset, this takes several *seconds*
-    	hw_sendCMD(0xB800); // in case we're still in OOK mode
+    	phy_sendCMD(0xB800); // in case we're still in OOK mode
     	while (digitalRead(RFM_IRQ) == 0)
-        	hw_sendCMD(0x0000);
+        	phy_sendCMD(0x0000);
 
   		// Configuration Setting Command
   		// Band = 1
   		// Enable TX and Enable RX FIFO buffer
   		// Crystal load not in data sheet
-    	hw_sendCMD(0x80C7 | (1 << 4)); // EL (ena TX), EF (ena RX FIFO), 12.0pF
+    	phy_sendCMD(0x80C7 | (1 << 4)); // EL (ena TX), EF (ena RX FIFO), 12.0pF
     
     	// Frequency Setting Command
     	// 12 bytes
     	// FC = 430 + F * 0,0025 MHz
     	// FC is carrier frequency and F is frequency parameter 36 <= F <= 3903
-    	hw_sendCMD(0xA000 + 1600); // 96-3960 freq range of values within band
+    	phy_sendCMD(0xA000 + 1600); // 96-3960 freq range of values within band
     
     	// Data Rate Command
     	// BR = 10000000/29/(R+1)/(1+cs*7)
     	// cs = &0x80
     	// R = &0x7F
-    	hw_sendCMD(0xC606); // approx 49.2 Kbps, i.e. 10000/29/(1+6) Kbps -- 10000000/29/((0x06)+1)/(1+(fist bit in last byte)*7)
+    	phy_sendCMD(0xC606); // approx 49.2 Kbps, i.e. 10000/29/(1+6) Kbps -- 10000000/29/((0x06)+1)/(1+(fist bit in last byte)*7)
     
     	// Receiver Control Command
     	// VDI output (or interrupt input): p16 = &0x400
@@ -139,14 +139,14 @@ namespace rf {
     	// VDI response time: &0x300 -> Fast
     	// Select LNA gain: &0x18 -> 0dBm
     	// Select DRSSI treshold: 0x7 -> -91dBm
-    	hw_sendCMD(0x94A2); // VDI,FAST,134kHz,0dBm,-91dBm
+    	phy_sendCMD(0x94A2); // VDI,FAST,134kHz,0dBm,-91dBm
     
     	// Data Filter Command
     	// Enable clock recovery auto-lock: 0x80
     	// Enable clock recovery fast mode (OFF): 0x40
     	// Filter type: Digital filter: 0x10 
     	// Set DQD threshold: 0x7
-    	hw_sendCMD(0xC2AC); // AL,!ml,DIG,DQD4
+    	phy_sendCMD(0xC2AC); // AL,!ml,DIG,DQD4
     
     	// Group
     	// FIFO and Reset Mode Command
@@ -154,11 +154,11 @@ namespace rf {
     	// Select the length of the synchron pattern: See datasheet -> 0xC (is 0) -> Reprogrammed in next command
     	// Enable FIFO fill -> 0x2 (ON)
     	// Disable hi sensitivity reset mode -> 0x1 (ON)
-    	hw_sendCMD(0xCA83); // FIFO8,2-SYNC,!ff,DR
+    	phy_sendCMD(0xCA83); // FIFO8,2-SYNC,!ff,DR
     
     	// Synchron pattern Command - Reprograms byte 0
     	// Byte 0: 0xFF
-    	hw_sendCMD(0xCE00 | hw_filter); // SYNC=2DXX；
+    	phy_sendCMD(0xCE00 | hw_filter); // SYNC=2DXX；
         
     	// AFC Command
     	// Keep offset when VDI high
@@ -166,62 +166,62 @@ namespace rf {
     	// Disable AFC hi accurency mode
     	// Enable AFC output register
     	// Enable AFC function
-    	hw_sendCMD(0xC483); // @PWR,NO RSTRIC,!st,!fi,OE,EN
+    	phy_sendCMD(0xC483); // @PWR,NO RSTRIC,!st,!fi,OE,EN
     	
     	// TX Configuration Control Command
     	// MP (no documentation off what that is - therefore off)
     	// Frequency derivation: 90kHz
     	// Output power: -0dBm (should be max according to RF12)
-    	hw_sendCMD(0x9850); // !mp,90kHz,MAX OUT
+    	phy_sendCMD(0x9850); // !mp,90kHz,MAX OUT
     	
     	// PLL Setting Command
     	// Selected uC CLK frequency: 2.5 MHz or less
     	// Low power mode for crystal (bootup time is 2 ms (compared to 1 ms as fast time) but uses less power)
     	// Disables the dithering in the PLL loop
     	// Max bit rate: 256 kbps
-    	hw_sendCMD(0xCC77); // OB1，OB0, LPX,！ddy，DDIT，BW0
+    	phy_sendCMD(0xCC77); // OB1，OB0, LPX,！ddy，DDIT，BW0
     	
     	// Set state idle
-    	hw_setStateSleep();
+    	phy_setStateSleep();
     	
     	// Setup interrupt
-    	attachInterrupt(0, hw_interrupt, LOW);
+    	attachInterrupt(0, phy_interrupt, LOW);
 	}
 	
-	static void hw_interrupt() {
-		hw_sendCMD(0x0000); // Wake up
+	static void phy_interrupt() {
+		phy_sendCMD(0x0000); // Wake up
 	
-		if (hw_state == STATE_RX) {
+		if (phy_state == STATE_RX) {
 			// Read from receiver
-			uint8_t in = hw_sendCMD(0xB000);
+			uint8_t in = phy_sendCMD(0xB000);
 			
-			if (hw_buffer_index == 0 && hw_buffer_len == 0) {
+			if (phy_buffer_index == 0 && phy_buffer_len == 0) {
 				// Read length of package
-				hw_buffer_len = in; // Implicit casted to uint8_t
+				phy_buffer_len = in; // Implicit casted to uint8_t
 				
 				// Detect if length is bigger than max length
-				if (hw_buffer_len > MAX_LEN) {
-					hw_buffer_len = 0;
+				if (phy_buffer_len > MAX_LEN) {
+					phy_buffer_len = 0;
 					// Go to idle and change state
-					hw_setStateSleep();
+					phy_setStateSleep();
 				}
 			} else {
 				// Read to byte array
-				hw_buffer[hw_buffer_index++] = in;
+				phy_buffer[phy_buffer_index++] = in;
 				
 				// Detect end of receive
-				if (hw_buffer_index >= hw_buffer_len) {
+				if (phy_buffer_index >= phy_buffer_len) {
 					// Go to sleep but do not change state
-					hw_sendCMD(0x8201);
+					phy_sendCMD(0x8201);
 				}
 			}
-		} else if (hw_state != STATE_IDLE) {
+		} else if (phy_state != STATE_IDLE) {
 			// Should never interrupt in IDLE mode - but just to be sure
 			// Chooce what to send
 			uint8_t out;
 			
 			// Read and update state
-			uint8_t state = hw_state++;
+			uint8_t state = phy_state++;
 			
 			if (state == STATE_TX_BYTE1) {
 				out = 0x2D;
@@ -229,12 +229,12 @@ namespace rf {
 				// Byte 0 is the filter set on initilize (Remember byte 1 is sent before byte 0 - see datasheet)
 				out = hw_filter;
 			} else if (state == STATE_TX_LEN) {
-				out = hw_buffer_len;
-			} else if (state < hw_buffer_len) {
+				out = phy_buffer_len;
+			} else if (state < phy_buffer_len) {
 				// state is 0 indexed
-				// hw_buffer_len is 1 indexed
-				out = hw_buffer[state];
-			} else if (state == hw_buffer_len) {
+				// phy_buffer_len is 1 indexed
+				out = phy_buffer[state];
+			} else if (state == phy_buffer_len) {
 				// Also send dummy 0xAA byte one time after all data is sent or the data is not received correctly
 				// It is possible to perform this sequence without sending a dummy byte (step i.) but after loading the last data byte to the transmit
 				// register the PA turn off should be delayed for at least 16 bits time. The clock source of the microcontroller (if the clock is not supplied
@@ -249,24 +249,24 @@ namespace rf {
 				out = 0xAA;
 			
 				// Sleep RF module
-				hw_setStateSleep();				
+				phy_setStateSleep();				
 			}
 			
 			// Send data
-			hw_sendCMD(0xB800 | out);
+			phy_sendCMD(0xB800 | out);
 		}
 	}
 	
-	inline void hw_enableRF() {
+	inline void phy_enableRF() {
 		digitalWrite(SPI_SS, LOW);
 	}
 	
-	inline void hw_disableRF() {
+	inline void phy_disableRF() {
 		digitalWrite(SPI_SS, HIGH);
 	}
 
-	inline void hw_setStatereceive() {
-		hw_state = STATE_RX;
+	inline void phy_setStatereceive() {
+		phy_state = STATE_RX;
 		
 		// Power Management Command
 		// Enable receiver: &0x80
@@ -274,107 +274,107 @@ namespace rf {
 		// Enable synthesizer: &0x10
 		// Enable crystal oscillator: &0x8
 		// Disable clock output of CLK pin: &0x1 (Clock is generated from master)
-		hw_sendCMD(0x82D9);
+		phy_sendCMD(0x82D9);
 	}
 	
 	/*
-	inline void hw_setStateIdle() {
-		hw_state = STATE_IDLE;
-		hw_sendCMD(0x820D);
+	inline void phy_setStateIdle() {
+		phy_state = STATE_IDLE;
+		phy_sendCMD(0x820D);
 	}*/
 	
-	inline void hw_setStateTransmitter() {
-		hw_state = STATE_TX_BYTE1;
+	inline void phy_setStateTransmitter() {
+		phy_state = STATE_TX_BYTE1;
 		
 		// Power Management Command
 		// Enable transmitter: &0x20
 		// Enable synthesizer: &0x10
 		// Enable crystal oscillator: &0x8
 		// Disable clock output of CLK pin: &0x1 (Clock is generated from master)
-		//hw_sendCMD(0x8239);
-		hw_sendCMD(0x823D);
+		//phy_sendCMD(0x8239);
+		phy_sendCMD(0x823D);
 	}
 	
-	inline void hw_setStateSleep() {
-		hw_state = STATE_IDLE;
+	inline void phy_setStateSleep() {
+		phy_state = STATE_IDLE;
 		
 		// Power Management Command
 		// Disable clock output of CLK pin: &0x1 (Clock is generated from master)
-		hw_sendCMD(0x8201);
+		phy_sendCMD(0x8201);
 	}
 	
-	bool hw_sendWait(const uint8_t buffer[], uint8_t len) {
-		if(hw_send(buffer, len) == false)
+	bool phy_sendWait(const uint8_t buffer[], uint8_t len) {
+		if(phy_send(buffer, len) == false)
 			return false;
 			
-		while (hw_state != STATE_IDLE);
+		while (phy_state != STATE_IDLE);
 		return true;
 	}
 	
-	bool hw_send(uint8_t byte) {
+	bool phy_send(uint8_t byte) {
 		uint8_t data[] = { byte };
-		return hw_send(data, 1);
+		return phy_send(data, 1);
 	}
 	
-	bool hw_send(const uint8_t buffer[], uint8_t len) {
+	bool phy_send(const uint8_t buffer[], uint8_t len) {
 		if (len < 0)
 			return false;
 			
 		if (len > MAX_LEN)
 			return false;
 		
-		if (!hw_canSend())
+		if (!phy_canSend())
 			return false;
 			
 		// Copy buffer in buffer
-		memcpy((void*)hw_buffer, buffer, len);
+		memcpy((void*)phy_buffer, buffer, len);
 		
 		// Setup buffer index and len
-		hw_buffer_index = 0;
-		hw_buffer_len = len;
+		phy_buffer_index = 0;
+		phy_buffer_len = len;
 		
 		// Set transmitting mode
-		hw_setStateTransmitter();
+		phy_setStateTransmitter();
 		
 		return true;
 	}
 	
-	bool hw_canSend() {
+	bool phy_canSend() {
 		// Check if we can stop the receiver
 		// Status Read Command
 		// Antenna tuning signal strength: &0x100
-		// Serial.println(hw_sendCMD(0x0000); & 0x0100 == 0);
+		// Serial.println(phy_sendCMD(0x0000); & 0x0100 == 0);
 		// Remember to disable IRQ
 		
-		// Possible Race condition on hw_state
-		if (hw_state == STATE_RX && hw_buffer_index == 0) {// && hw_sendCMDIRQ(0x0000) & 0x0100 == 0) {
-			// Set state to sleep - sets hw_state to IDLE
-			hw_setStateSleep();
+		// Possible Race condition on phy_state
+		if (phy_state == STATE_RX && phy_buffer_index == 0) {// && phy_sendCMDIRQ(0x0000) & 0x0100 == 0) {
+			// Set state to sleep - sets phy_state to IDLE
+			phy_setStateSleep();
 		}
 		
-		return hw_state == STATE_IDLE;
+		return phy_state == STATE_IDLE;
 	}
 	
-	uint8_t* hw_receive(uint8_t* length) {
-		if (hw_state == STATE_RX && hw_buffer_index >= hw_buffer_len && hw_buffer_index != 0) {
-			hw_state = STATE_IDLE;
+	uint8_t* phy_receive(uint8_t* length) {
+		if (phy_state == STATE_RX && phy_buffer_index >= phy_buffer_len && phy_buffer_index != 0) {
+			phy_state = STATE_IDLE;
 			
-			*length = hw_buffer_len;
-			hw_buffer_index = 0;
-			hw_buffer_len = 0;
+			*length = phy_buffer_len;
+			phy_buffer_index = 0;
+			phy_buffer_len = 0;
 			
-			return hw_buffer;
-		} else if (hw_state == STATE_IDLE) {
-			hw_buffer_index = 0;
-			hw_buffer_len = 0;
+			return phy_buffer;
+		} else if (phy_state == STATE_IDLE) {
+			phy_buffer_index = 0;
+			phy_buffer_len = 0;
 		
-			hw_setStatereceive();
+			phy_setStatereceive();
 		}
 		
 		return NULL;
 	}
 	
-	void hw_enableIRQ() {
+	void phy_enableIRQ() {
 		#ifdef EIMSK
 			// Arduino
     		bitClear(EIMSK, INT0);
@@ -384,7 +384,7 @@ namespace rf {
     	#endif
 	}
 	
-	void hw_disableIRQ() {
+	void phy_disableIRQ() {
 		#ifdef EIMSK
 			// Arduino
     		bitSet(EIMSK, INT0);
@@ -394,29 +394,29 @@ namespace rf {
     	#endif
 	}
 	
-	uint16_t hw_sendCMDIRQ(uint16_t command) {
-		hw_disableIRQ();
+	uint16_t phy_sendCMDIRQ(uint16_t command) {
+		phy_disableIRQ();
 		
-		uint16_t result = hw_sendCMD(command);
+		uint16_t result = phy_sendCMD(command);
 		
-		hw_enableIRQ();
+		phy_enableIRQ();
 		
 		return result;
 	}
 	
-	uint16_t hw_sendCMD (uint16_t command) {
+	uint16_t phy_sendCMD (uint16_t command) {
 		// Change spi speed - see https://www.arduino.cc/en/Tutorial/SPIEEPROM
 		#if F_CPU > 10000000
     		bitSet(SPCR, SPR0);
 		#endif
 	
-    	hw_enableRF(); // Chip select (activate SPI)
+    	phy_enableRF(); // Chip select (activate SPI)
     
     	// Send first 8 bytes and read first 8 bytes reply - then the next 8 bytes
-    	uint16_t response = hw_sendCMDByte(command >> 8) << 8;
-    	response |= hw_sendCMDByte(command);
+    	uint16_t response = phy_sendCMDByte(command >> 8) << 8;
+    	response |= phy_sendCMDByte(command);
     
-    	hw_disableRF(); // Chip select (deactivate SPI)
+    	phy_disableRF(); // Chip select (deactivate SPI)
     	
     	#if F_CPU > 10000000
     		bitClear(SPCR, SPR0);
@@ -427,7 +427,7 @@ namespace rf {
 	
 	// Sends one byte and returns one byte. Please note that RFM12 is expecting 2 bytes for each command
 	// https://www.arduino.cc/en/Tutorial/SPIEEPROM
-	uint8_t hw_sendCMDByte (uint8_t out) {
+	uint8_t phy_sendCMDByte (uint8_t out) {
 		// Arduino
 		#ifdef SPDR
 			SPDR = out;                    	// Start the transmission

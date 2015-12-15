@@ -6,7 +6,7 @@
 
 void setup() {
   // Init RF module
-  rf::hw_init((uint8_t)20);
+  rf::phy_init((uint8_t)20);
 
   // Set pinmode for strain and disable
   pinMode(PIN_STRAIN, OUTPUT);
@@ -18,7 +18,7 @@ void setup() {
 
 void loop() {
   uint8_t len = 0;
-  uint8_t* data = rf::hw_receive(&len);
+  uint8_t* data = rf::phy_receive(&len);
   if (data != NULL) {
     if (len == 4) {
       switch (data[0]) {
@@ -46,11 +46,11 @@ void loop() {
           }
           break;
         default:
-          while (!rf::hw_send(data, len));
+          while (!rf::phy_send(data, len));
       }
     }
     else {
-      while (!rf::hw_send(data, len));
+      while (!rf::phy_send(data, len));
     }
   }
 }
@@ -83,11 +83,11 @@ void getData(uint8_t count, uint16_t delayMicros) {
 
   // Send info packages
   sprintf(sendData, "Samples: %d", count);
-  while (!rf::hw_sendWait((uint8_t*)sendData, strlen(sendData)));
+  while (!rf::phy_sendWait((uint8_t*)sendData, strlen(sendData)));
   sprintf(sendData, "Delay: %d", delayMicros);
-  while (!rf::hw_sendWait((uint8_t*)sendData, strlen(sendData)));
+  while (!rf::phy_sendWait((uint8_t*)sendData, strlen(sendData)));
   sprintf(sendData, "Time: %d", endMicros - startMicros);
-  while (!rf::hw_sendWait((uint8_t*)sendData, strlen(sendData)));
+  while (!rf::phy_sendWait((uint8_t*)sendData, strlen(sendData)));
 
 
   // Send all samples
@@ -96,7 +96,7 @@ void getData(uint8_t count, uint16_t delayMicros) {
     sprintf(sendData, "%d", samples[i]);
 
     // Send data
-    while (!rf::hw_sendWait((uint8_t*)sendData, strlen(sendData)));
+    while (!rf::phy_sendWait((uint8_t*)sendData, strlen(sendData)));
   }
 }
 

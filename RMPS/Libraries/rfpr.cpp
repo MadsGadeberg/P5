@@ -102,7 +102,7 @@ namespace rf {
 		uint8_t bytearray[3];
 		getByteArrayForConnectRequest(input, bytearray);
 		
-		return hw_send(bytearray, 3);
+		return phy_send(bytearray, 3);
 	}
 	
 	// Sends a connectConfirmation
@@ -110,7 +110,7 @@ namespace rf {
 		uint8_t bytearray[4];
 		getByteArrayForConnectConfirmation(input, bytearray);
 		
-		return hw_send(bytearray, 4);
+		return phy_send(bytearray, 4);
 	}
 	
 	// Sends a ping
@@ -118,7 +118,7 @@ namespace rf {
 		uint8_t bytearray[2];
 		getByteArrayForPing(input, bytearray);
 	
-		return hw_send(bytearray, 2);
+		return phy_send(bytearray, 2);
 	}
 	
 	// Sends a samplePacket
@@ -126,7 +126,7 @@ namespace rf {
 		uint8_t bytearray[SAMPLE_PACKET_SIZE];
 		getByteArrayForsamplePacket(input, bytearray);
 		
-		return hw_send(bytearray, SAMPLE_PACKET_SIZE);
+		return phy_send(bytearray, SAMPLE_PACKET_SIZE);
 	}
 	
 	// Sends a connect request with the specified RID
@@ -161,7 +161,7 @@ namespace rf {
 	PacketTypes pr_receive(char* output) {
 		// Read from hardware layer and check if any data is received
 		uint8_t len = 0;
-		uint8_t* data = (uint8_t*)hw_receive(&len);
+		uint8_t* data = (uint8_t*)phy_receive(&len);
 		if (data == NULL)
 			return NODATA;
 			

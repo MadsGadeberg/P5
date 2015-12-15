@@ -14,13 +14,13 @@ void setup() {
   Serial.begin(57600);
 
   // Init RF module
-  rf::hw_init((uint8_t)20);
+  rf::phy_init((uint8_t)20);
 }
 
 void loop() {
   // receive data
   uint8_t len = 0;
-  uint8_t* rdata = rf::hw_receive(&len);
+  uint8_t* rdata = rf::phy_receive(&len);
   if (rdata != NULL) {
       Serial.print("received ");
       Serial.println(len);
@@ -150,7 +150,7 @@ uint8_t GetArg() {
 }
 
 void SendData(const uint8_t arg[], int len) {
-  if (rf::hw_send(arg, len))
+  if (rf::phy_send(arg, len))
   {
     Serial.println("Sent");
     return;

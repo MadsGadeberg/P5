@@ -19,7 +19,7 @@ void setup() {
   Serial.begin(57600);
 
   // Init RF module
-  rf::hw_init((uint8_t)20);
+  rf::phy_init((uint8_t)20);
 
   // Send data
   SendData();
@@ -28,7 +28,7 @@ void setup() {
 void loop() {
   // receive data
   uint8_t len = 0;
-  volatile uint8_t* rdata = rf::hw_receive(&len);
+  volatile uint8_t* rdata = rf::phy_receive(&len);
   if (rdata != NULL) {
     if (len == receive_SIZE) {
       uint32_t current = millis();
@@ -66,9 +66,9 @@ void SendData() {
 #endif
 
 #ifndef WAIT
-  if (!rf::hw_send(arraySend, SEND_PACKET))
+  if (!rf::phy_send(arraySend, SEND_PACKET))
 #else
-  if (!rf::hw_sendWait(arraySend, SEND_PACKET))
+  if (!rf::phy_sendWait(arraySend, SEND_PACKET))
 #endif
   {
     Serial.println("NOT SEND");
