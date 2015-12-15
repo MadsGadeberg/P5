@@ -52,8 +52,8 @@ void printSampesToSerial();
 
 void setup() {
 	Serial.begin(250000);
-	hw_init((uint8_t)GROUP); // Initializing the RF module
-	delay(100); // Power up time (worst case from datasheet)
+    rf::phy_init((uint8_t)GROUP); // Initializing the RF module	
+    delay(100); // Power up time (worst case from datasheet)
 	Serial.println("Init done");
 
 	pinMode(RUNPIN, INPUT);
@@ -252,7 +252,6 @@ void initRunMode() {
     Serial.println("________________________________________________");
     Serial.println("runmode initiated");
 }
-
 
 void printSampesToSerial() {
     unsigned long int sampleNrToPrint = sampleToPrint();
