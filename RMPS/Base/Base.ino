@@ -25,7 +25,7 @@ uint16_t connectedSatellites[MAX_CONNECTED_SATELLITES]; // the array that holds 
 
 // satellite ping operation information
 unsigned long int runmodeInitiated = 0;  // the time runmode was initiated - used to calculate ping times
-unsigned long int pingSent = 0; // time of last ping sent
+//unsigned long int pingSent = 0; // time of last ping sent
 int pingSatelliteCount = 0;   // The number of satellite pings since runModeInitiated
 int satellitePinged = 0;    // if the current sattelite have ben pinged - ping only once!
 
@@ -34,10 +34,6 @@ struct SamplePacketVerified *dataPacket;
 SamplePacketVerified *samplePacketArray[8];
 // all data retrieved - Memmory issues at some point!!!!!!
 LinkedList<LinkedList<Sample>> dataSet;
-
-// Debug Data allocation
-LinkedList<int> recieveTimes;
-unsigned long int pingTime = 0;
 
 // Prototypes
 void registerSatellite();
@@ -123,7 +119,7 @@ void getDataFromSatellites() {
 	// caclulating the timewindow for satelliteToGetDataFrom.
 	unsigned long int timeWindowStart = runmodeInitiated + (pingSequenceCount * TIME_BETWEEN_PING_SEQUENCE) + (satelliteToGetDataFrom * TIME_BETWEEN_PING);
 	unsigned long int timeWindowEnd = timeWindowStart + TIME_BETWEEN_PING;
-    Serial.print("                             Start: "); Serial.print(timeWindowStart);Serial.print(" End: "); Serial.print(timeWindowEnd);Serial.print(" time: "); Serial.println(millis());
+    //Serial.print("                             Start: "); Serial.print(timeWindowStart);Serial.print(" End: "); Serial.print(timeWindowEnd);Serial.print(" time: "); Serial.println(millis());
 
 
 	// if we are inside in the timeslice of the current satellite to ping.
@@ -140,7 +136,7 @@ void getDataFromSatellite(int satellite) {
 	// ping satellite
 	if (satellitePinged == 0){
 		pingSatellite(satellite);
-	    Serial.print("                             pinged: "); Serial.println(millis());
+	    Serial.print("                            VID: "); Serial.print(satellite);Serial.print(" pinged: "); Serial.println(millis());
 	}
 	// datasource for returned data
 	char data[SAMPLE_PACKET_VERIFIED_SIZE];
@@ -153,13 +149,13 @@ void getDataFromSatellite(int satellite) {
         LinkedList<Sample> *samples = dataSet.getPtr(satellite);
 		
 		// save data to dataSet
-		for (int i = 0; i < SAMPLES_PER_PACKET; i++){    
+		for (int i = 0; i < SAMPLES_PER_PACKET; i++){
             dataSet.getPtr(satellite)->add(samplePacket->data[i]);
-            //Serial.println("samplePacket:");
-            //Serial.println(samplePacket->data[i].value);
-            //int sampleArraySize = dataSet.getPtr(satellite)->size();
-            //Serial.println("dataSet:");
-            //Serial.println(dataSet.getPtr(satellite)->getPtr(sampleArraySize-1)->value);
+            
+            Serial.print("i: "); Serial.println(i);
+            Serial.print("samplePacket:");  Serial.println(samplePacket->data[i].value);
+            int sampleArraySize = dataSet.getPtr(satellite)->size();
+            Serial.print("dataSet:");       Serial.println(dataSet.getPtr(satellite)->getPtr(sampleArraySize-1)->value);
         }
 		incrementSatellite();
 	}
@@ -173,14 +169,14 @@ void logTimeout(int satellite){
             s.valid = false;
             dataSet.getPtr(satellite)->add(s);
         }
-        Serial.print("                             timeout: "); Serial.println(millis());
+        //Serial.print("                             timeout: "); Serial.println(millis()-pingSent);
         incrementSatellite();
 }
 
 // pings the satellite and the timer of the ping
 void pingSatellite(int satellite) {
 	pr_send_ping((char)satellite);	
-    pingTime = millis();
+    //pingSent = millis();
     //Serial.println("____________________");
     //Serial.print("Sat ");
     //Serial.print(satellite);
@@ -246,7 +242,7 @@ void initRunMode() {
 	// resetting ping counts
 	pingSatelliteCount = 0;
 	satellitePinged = 0;
-	pingSent = 0;
+	//pingSent = 0;
 	runmodeInitiated = millis();
 
     Serial.println("________________________________________________");
