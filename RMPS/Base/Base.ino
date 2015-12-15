@@ -31,10 +31,6 @@ int satellitePinged = 0;    // if the current sattelite have ben pinged - ping o
 
 // Data location
 struct SamplePacketVerified *dataPacket;
-SamplePacketVerified *samplePacketArray[8];
-// all data retrieved - Memmory issues at some point!!!!!!
-LinkedList<LinkedList<Sample>> dataSet;
-
 // Prototypes
 void registerSatellite();
 void getDataFromSatellites();
@@ -44,7 +40,6 @@ void pingSatellite(int satelliteNr);
 void incrementSatellite();
 void checkForStateChange();
 void initRunMode();
-void printSampesToSerial();
 
 void setup() {
 	Serial.begin(250000);
@@ -61,7 +56,6 @@ void loop() {
 		registerSatellite();
 	else if (systemState == RUNMODE){
 		getDataFromSatellites();
-	    printSampesToSerial();
 	}
 	checkForStateChange();
 }
@@ -134,42 +128,26 @@ void getDataFromSatellites() {
 // pings satellite for data and saves it to dataSet
 void getDataFromSatellite(int satellite) {
 	// ping satellite
-	if (satellitePinged == 0){
+	if (satellitePinged == 0)
 		pingSatellite(satellite);
-	    Serial.print("                            VID: "); Serial.print(satellite);Serial.print(" pinged: "); Serial.println(millis());
-	}
+       
 	// datasource for returned data
 	char data[SAMPLE_PACKET_VERIFIED_SIZE];
 
 	if (pr_receive(data) == DATA) {
-        Serial.print("                             recieved: "); Serial.println(millis());
+        //Serial.println("                             recieve: ");
+    
         SamplePacketVerified* samplePacket = (SamplePacketVerified*) data;
 
-        // get the samples
-        LinkedList<Sample> *samples = dataSet.getPtr(satellite);
-		
-		// save data to dataSet
-		for (int i = 0; i < SAMPLES_PER_PACKET; i++){
-            dataSet.getPtr(satellite)->add(samplePacket->data[i]);
-            
-            Serial.print("i: "); Serial.println(i);
-            Serial.print("samplePacket:");  Serial.println(samplePacket->data[i].value);
-            int sampleArraySize = dataSet.getPtr(satellite)->size();
-            Serial.print("dataSet:");       Serial.println(dataSet.getPtr(satellite)->getPtr(sampleArraySize-1)->value);
-        }
 		incrementSatellite();
 	}
 }
 
 // when timeout occurs save invalid data in data structure and increment satt
 void logTimeout(int satellite){
+        //Serial.println("                             timeout: ");
         // save invalid dummydata to dataSet
-        for (int i = 0; i < SAMPLES_PER_PACKET; i++) {
-            Sample s;
-            s.valid = false;
-            dataSet.getPtr(satellite)->add(s);
-        }
-        //Serial.print("                             timeout: "); Serial.println(millis()-pingSent);
+
         incrementSatellite();
 }
 
@@ -230,13 +208,6 @@ void initListeningForSatsMode(){
 
 // setting runmode configuration.
 void initRunMode() {
-	// clear datastructure for new dataSet
-	dataSet.clear();
-
-    
-    // create Sample lists for all connected satellites
-	for (int i = 0; i < nrOfSatellitesConected; i++)
-		dataSet.add(LinkedList<Sample>());
 
 	systemState = RUNMODE;
 	// resetting ping counts
@@ -247,44 +218,5 @@ void initRunMode() {
 
     Serial.println("________________________________________________");
     Serial.println("runmode initiated");
-}
-
-void printSampesToSerial() {
-    unsigned long int sampleNrToPrint = sampleToPrint();
-    
-    // due to a ping delay between the different satellites we need to calculate the corect data
-    for (int i = 0; i < nrOfSatellitesConected; i++) {
-        
-        // the corrected sample to print. The samples for each satellite in dataSet is indexed with a difference of SAMPLES_BETWEEN_PINGS
-        int indexCorrectedSampleToPrint = sampleNrToPrint - SAMPLES_BETWEEN_PINGS * i;
-        
-        //Serial.print("indexCorrected to print: ");
-        //Serial.println(indexCorrectedSampleToPrint);
-
-        Sample *s = dataSet.getPtr(i)->getPtr(indexCorrectedSampleToPrint);
-        
-        //Serial.println(dataSet.getPtr(i)->size());
-        //Serial.print("Satellite: ");    Serial.println(i);
-        //Serial.print("sampleToPrint: ");    Serial.println(sampleNrToPrint);
-        //Serial.print("isValid: ");          Serial.println(s->valid);
-        //Serial.print("value: ");          Serial.println(s->value);
-        //Serial.println("-----------------------------");
-    }
-}
-
-// this function gets the sample number fra runmode initiated we want to print
-unsigned long int sampleToPrint(){
-    // Get the delay of how old data we want to print
-    // timedelay is the time in the past we want to print. We need to wait for the data to be available from all the satellites before we can print them. The time we need to wait is the time from the newest dataset that is available for all satellites. To ensure we have all data it is easier to wait for at least TIME_BETWEEN_PING_SEQUENCE + the time it takes the satellite to return the data which is less than TIME_BETWEEN_PING. That way we always know we have the data needed.
-    unsigned long int timeDelay = (TIME_BETWEEN_PING_SEQUENCE + TIME_BETWEEN_PING);   
-    
-    // Get the time we have ben in runmode
-    unsigned long int runModeTime = millis() - runmodeInitiated;
-
-    // get the time from runmode we want to print
-    unsigned long int timeOfSamplesToPrint = (runModeTime < timeDelay ? 0 : (runModeTime - timeDelay));
-    
-    // the sample number we want to print in the past
-    return timeOfSamplesToPrint / TIME_BETWEEN_SAMPLES;
 }
 

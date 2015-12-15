@@ -1,7 +1,7 @@
 // Global constants
 #define GROUP 20
 #define TIME_BETWEEN_SAMPLES 5	//
-#define TIME_BETWEEN_PING 20	// Time between each satellite ping
+#define TIME_BETWEEN_PING 24	// Time between each satellite ping
 #define TIME_BETWEEN_PING_SEQUENCE 200 // Time between each time we will ping all sattelites connected
 
 #define SAMPLES_BETWEEN_PINGS TIME_BETWEEN_PING / TIME_BETWEEN_SAMPLES // the amount of samples between satellite pings
