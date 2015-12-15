@@ -26,7 +26,7 @@ void prepareDataForBase();
 
 void setup() {
 	adcSetup();
-	Serial.begin(57600);
+	Serial.begin(250000);
 	Serial.println("Hello!");
 	pinMode(2, OUTPUT);
 	rf::hw_init((uint8_t)GROUP); // Initializing the RF module
@@ -43,7 +43,7 @@ void loop() {
 	if (pingReceivedTime + TIME_BETWEEN_PING_SEQUENCE - SLEEP_TIME_THRESHOLD < millis()) // sleeptime threshold is the unsertainty of drift and other stuff
 	{
 		rf::packetTypes type = rf::pr_receive(data);
-		if (type == rf::PING)
+		if (type == 2)
 		{
 			// Start of new sample sequence
 			pingReceivedTime = millis();
