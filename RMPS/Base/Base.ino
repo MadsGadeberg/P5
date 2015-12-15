@@ -280,13 +280,9 @@ unsigned long int sampleToPrint(){
     
     // Get the time we have ben in runmode
     unsigned long int runModeTime = millis() - runmodeInitiated;
-    //Serial.print("runModeTime: ");
-    //Serial.println(runModeTime);
 
     // get the time from runmode we want to print
     unsigned long int timeOfSamplesToPrint = (runModeTime < timeDelay ? 0 : (runModeTime - timeDelay));
-    //Serial.print("timeOfSamplesToPrint: ");
-    //Serial.println(timeOfSamplesToPrint);
     
     // the sample number we want to print in the past
     return timeOfSamplesToPrint / TIME_BETWEEN_SAMPLES;
