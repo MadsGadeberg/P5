@@ -1,8 +1,11 @@
+#include <MemoryFree.h>
+
 #include <Arduino.h>
 #include <QueueArray.h>
 #include <rfapp.h>
 #include <rfhw.h>
 #include <rfpr.h>
+
 
 #define RUNPIN 3
 #define LISTENPIN 4
@@ -14,7 +17,7 @@ using namespace rf;
 typedef enum SystemStates { LISTENINGFORSATS, RUNMODE, STANDBY } SystemStates;
 
 // the state of the base
-SystemStates systemState = STANDBY;
+SystemStates systemState = LISTENINGFORSATS;
 // connected satellites information
 int nrOfSatellitesConected = 0; // This value also shows the next VID to assign to a satellite
 uint16_t connectedSatellites[MAX_CONNECTED_SATELLITES]; // the array that holds the RID of the connected satellites
@@ -23,6 +26,8 @@ unsigned long int runmodeInitiated = 0;  // the time runmode was initiated - use
 unsigned long int pingSatelliteCount = 0;   // The number of satellite pings since runModeInitiated
 bool satellitePinged = 0;    // if the current sattelite have ben pinged - ping only once!
 unsigned long int pingSequenceCount;
+
+unsigned long int samplePrintCount = 0;
 
 QueueArray<Sample> samples[MAX_CONNECTED_SATELLITES];
 
@@ -36,7 +41,7 @@ void incrementSatellite();
 void checkForStateChange();
 void initRunMode();
 
-void setup() {
+void setup(){
 	Serial.begin(250000);
     rf::phy_init((uint8_t)GROUP); // Initializing the RF module	
     delay(100); // Power up time (worst case from datasheet)
@@ -46,7 +51,7 @@ void setup() {
 	pinMode(LISTENPIN, INPUT);
 }
 
-void loop() {
+void loop(){
 	if (systemState == LISTENINGFORSATS)
 		registerSatellite();
 	else if (systemState == RUNMODE){
@@ -98,7 +103,7 @@ int satConnected(int RID){
 }
 
 // this function initiates a ping sequence.
-void getDataFromSatellites() {
+void getDataFromSatellites(){
 	unsigned long int time = millis();
 	// the nr of Ping sequences elapsed
 	pingSequenceCount = nrOfSatellitesConected == 0 ? 0 : pingSatelliteCount / nrOfSatellitesConected;
@@ -121,7 +126,7 @@ void getDataFromSatellites() {
 }
 
 // pings satellite for data and saves it to dataSet
-void getDataFromSatellite(int satellite) {
+void getDataFromSatellite(int satellite){
 	// ping satellite
 	if (satellitePinged == 0)
 		pingSatellite(satellite);
@@ -133,7 +138,10 @@ void getDataFromSatellite(int satellite) {
         Serial.println("                             recieve: ");
         SamplePacketVerified* tmpSamples = (SamplePacketVerified*) data;
         for(int i = 0; i< SAMPLES_PER_PACKET; i++){
-            samples[satellite].enqueue(tmpSamples->data[i]);
+            //Serial.print(i); Serial.print(" mem:"); Serial.println(freeMemory());
+            QueueArray<Sample> *queue = &samples[satellite];
+            Sample s = tmpSamples->data[i];
+            queue->enqueue(s);
         }
 		incrementSatellite();
 	}
@@ -152,7 +160,7 @@ void logTimeout(int satellite){
 }
 
 // pings the satellite and the timer of the ping
-void pingSatellite(int satellite) {
+void pingSatellite(int satellite){
 	pr_send_ping((char)satellite);	
     Serial.println("                             pinged: ");
     //pingSent = millis();
@@ -165,7 +173,7 @@ void pingSatellite(int satellite) {
 }
 
 // Function that increments satellite
-void incrementSatellite() {
+void incrementSatellite(){
 	pingSatelliteCount++;
 	satellitePinged = 0;
 
@@ -186,7 +194,7 @@ void incrementSatellite() {
 }
 
 // function that checks for buttonpresses to change systemState
-void checkForStateChange() {
+void checkForStateChange(){
 	if (digitalRead(LISTENPIN))      // Listen for satellites
         initListeningForSatsMode();
 	else if (digitalRead(RUNPIN))  // Run button
@@ -208,7 +216,7 @@ void initListeningForSatsMode(){
 }
 
 // setting runmode configuration.
-void initRunMode() {
+void initRunMode(){
     delay(500);
 	systemState = RUNMODE;
 	// resetting ping counts
@@ -232,16 +240,33 @@ void syncSamples(){
 
 void printSamples(){
     unsigned long int timeFromRunModeInitiated = (millis() - runmodeInitiated) < 0 ? 0 : (millis() - runmodeInitiated);
-    Serial.print("timeFromRunmodeInit: ");Serial.println(timeFromRunModeInitiated);
-    //int sampleDelay = 1000 / TIIME_BETWEEN_PING;
 
     // after 1 second we start to print samples from queue
     if (timeFromRunModeInitiated > 50){
+
+        // calculate timewindow
+        unsigned long int timeWindowStart = 50 + samplePrintCount * TIME_BETWEEN_SAMPLES;
+
+        Sample samplesToPrint[8];
+        for(int i = 0; i < 8; i++)
+            samplesToPrint[i].valid = false;
         
-        // check if there are samples to print
-        if (samples[0].isEmpty() == false){
-            for(int satellite = 0; satellite < nrOfSatellitesConected; satellite++){
-                Serial.println(samples[satellite].dequeue().value);
+        // if time to print sample
+        if(timeFromRunModeInitiated > timeWindowStart){
+            // check if there are samples to print
+            if (samples[0].isEmpty() == false){
+                for(int satellite = 0; satellite < nrOfSatellitesConected; satellite++){
+                    samplesToPrint[satellite] = samples[satellite].dequeue();
+                        Serial.println("-----------");
+                    if (samplesToPrint[satellite].valid){
+                        Serial.print("Sat "); Serial.print(satellite); Serial.print(": "); Serial.println(samplesToPrint[satellite].value);
+                    }
+                    else{
+                        Serial.print("Sat "); Serial.print(satellite); Serial.println(":-");
+                    }
+                }
+
+                samplePrintCount++;
             }
         }
     }
