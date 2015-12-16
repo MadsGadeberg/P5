@@ -6,8 +6,8 @@
 *.user
 *.userosscache
 *.sln.docstates
-*.vcxproj
 _vm/
+__vm/
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
@@ -84,7 +84,6 @@ ipch/
 *.psess
 *.vsp
 *.vspx
-*.vcxproj
 
 # TFS 2012 Local Workspace
 $tf/
@@ -213,3 +212,4 @@ FakesAssemblies/
 GeneratedArtifacts/
 _Pvt_Extensions/
 ModelManifest.xml
+Software/Base/__vm/.Base.vsarduino.h
