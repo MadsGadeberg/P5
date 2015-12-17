@@ -18,14 +18,16 @@ typedef enum SystemStates { LISTENINGFORSATS, RUNMODE, STANDBY } SystemStates;
 
 // the state of the base
 SystemStates systemState = LISTENINGFORSATS;
-// connected satellites information
+
+// Listening for satellites data
 int nrOfSatellitesConected = 0; // This value also shows the next VID to assign to a satellite
 uint16_t connectedSatellites[MAX_CONNECTED_SATELLITES]; // the array that holds the RID of the connected satellites
-// satellite ping operation information
+
+// Run mode data
 unsigned long int runmodeInitiated = 0;  // the time runmode was initiated - used to calculate ping times
 unsigned long int pingSatelliteCount = 0;   // The number of satellite pings since runModeInitiated
 bool satellitePinged = 0;    // if the current sattelite have ben pinged - ping only once!
-unsigned long int pingSequenceCount;
+unsigned long int pingSequenceCount = 0;
 
 unsigned long int samplePrintCount = 0;
 
@@ -113,8 +115,6 @@ void getDataFromSatellites(){
 	// caclulating the timewindow for satelliteToGetDataFrom.
 	unsigned long int timeWindowStart = runmodeInitiated + (pingSequenceCount * TIME_BETWEEN_PING_SEQUENCE) + (satelliteToGetDataFrom * TIME_BETWEEN_PING);
 	unsigned long int timeWindowEnd = timeWindowStart + TIME_BETWEEN_PING;
-    //Serial.print("                             Start: "); Serial.print(timeWindowStart);Serial.print(" End: "); Serial.print(timeWindowEnd);Serial.print(" time: "); Serial.println(millis());
-
 
 	// if we are inside in the timeslice of the current satellite to ping.
 	if ( timeWindowStart < time && time < timeWindowEnd)
@@ -135,7 +135,7 @@ void getDataFromSatellite(int satellite){
 	char data[SAMPLE_PACKET_VERIFIED_SIZE];
 
 	if (pr_receive(data) == DATA) {
-        Serial.println("                             recieve: ");
+        //Serial.println("                             recieve: ");
         SamplePacketVerified* tmpSamples = (SamplePacketVerified*) data;
         for(int i = 0; i< SAMPLES_PER_PACKET; i++){
             //Serial.print(i); Serial.print(" mem:"); Serial.println(freeMemory());
@@ -149,7 +149,6 @@ void getDataFromSatellite(int satellite){
 
 // when timeout occurs save invalid data in data structure and increment satt
 void logTimeout(int satellite){
-        Serial.println("                             timeout: ");
         // save invalid dummydata to dataSet
         for(int i = 0; i< SAMPLES_PER_PACKET; i++){
             Sample s;
@@ -162,7 +161,7 @@ void logTimeout(int satellite){
 // pings the satellite and the timer of the ping
 void pingSatellite(int satellite){
 	pr_send_ping((char)satellite);	
-    Serial.println("                             pinged: ");
+    //Serial.println("                             pinged: ");
     //pingSent = millis();
     //Serial.println("____________________");
     //Serial.print("Sat ");
@@ -217,19 +216,34 @@ void initListeningForSatsMode(){
 
 // setting runmode configuration.
 void initRunMode(){
-    delay(500);
-	systemState = RUNMODE;
-	// resetting ping counts
-	pingSatelliteCount = 0;
-	satellitePinged = 0;
-	//pingSent = 0;
-	runmodeInitiated = millis();
+    if (nrOfSatellitesConected > 0){
+        delay(500);
+    	systemState = RUNMODE;
     
-    syncSamples();
-    Serial.println("runmode initiated");
+        runmodeInitiated = millis();
+    	pingSatelliteCount = 0;
+    	satellitePinged = 0;
+        pingSequenceCount = 0;
+        samplePrintCount = 0;
+        
+        // clear samples queue
+        for(int i = 0; i < MAX_CONNECTED_SATELLITES; i++){
+            while(samples[i].isEmpty() == false)
+                samples[i].pop();
+        }
+        
+        syncSamples();
+        Serial.println("runmode initiated");
+    }
+    else {
+        delay(500);
+        Serial.println("No satellites connected!");
+
+    }
+        
 }
 
-// this function as padding samples to our samplequeue to make sure that the saved samples is syncronized.
+// this function is padding samples to our samplequeue to make sure that the saved samples is syncronized.
 void syncSamples(){
     for (int i = 0; i < nrOfSatellitesConected; i++){
         int samplesToAdd = i * SAMPLES_BETWEEN_PINGS;
