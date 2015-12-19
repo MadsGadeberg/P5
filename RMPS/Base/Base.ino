@@ -31,8 +31,8 @@ QueueArray<Sample> samples[MAX_CONNECTED_SATELLITES];
 bool isRunning = false;
 
 // Run mode data
-unsigned long int RUNNINGInitiated = 0;  // the time RUNNING was initiated - used to calculate ping times
-unsigned long int pingSatelliteCount = 0;   // The number of satellite pings since RUNNINGInitiated
+unsigned long int runningInitiated = 0;  // the time running was initiated - used to calculate ping times
+unsigned long int pingSatelliteCount = 0;   // The number of satellite pings since runningInitiated
 unsigned long int pingSequenceCount = 0;
 
 bool satellitePinged = 0;    // if the current sattelite have been pinged - ping only once!
@@ -47,7 +47,7 @@ void logTimeout(int satellite);
 void pingSatellite(int satelliteNr);
 void incrementSatellite();
 void checkForStateChange();
-void initRUNNING();
+void initRunning();
 
 void setup(){
 	Serial.begin(250000);
@@ -74,7 +74,7 @@ void loop(){
 void registerSatellite() {
 	char data[SAMPLE_PACKET_SIZE];
 
-	// if data is of type request, ad it to base and send confirmation.
+	// if data is of type request, add it to base and send confirmation.
 	if (pr_receive(data) == CONNECT_REQUEST) {
 		// cast
 		struct ConnectRequest *request = (ConnectRequest*)data;
@@ -118,7 +118,7 @@ void getDataFromSatellites() {
 	unsigned long int satelliteToGetDataFrom = nrOfSatellitesConected == 0 ? 0 : pingSatelliteCount % nrOfSatellitesConected;
 
 	// caclulating the timewindow for satelliteToGetDataFrom.
-	unsigned long int timeWindowStart = RUNNINGInitiated + (pingSequenceCount * TIME_BETWEEN_PING_SEQUENCE) + (satelliteToGetDataFrom * TIME_BETWEEN_PING);
+	unsigned long int timeWindowStart = runningInitiated + (pingSequenceCount * TIME_BETWEEN_PING_SEQUENCE) + (satelliteToGetDataFrom * TIME_BETWEEN_PING);
 	unsigned long int timeWindowEnd = timeWindowStart + TIME_BETWEEN_PING;
 
 	// if we are inside in the timeslice of the current satellite to ping.
@@ -178,7 +178,7 @@ void checkForStateChange() {
 	if (digitalRead(PIN_LISTENBTN))      // Listen for satellites
         initLISTENINGFORSATELITESMode();
 	else if (digitalRead(PIN_RUNBTN))  // Run button
-		initRUNNING();
+		initRunning();
 }
 
 // setting Listening for sats configuration
@@ -195,13 +195,13 @@ void initLISTENINGFORSATELITESMode() {
     Serial.println("Listening for sats");
 }
 
-// setting RUNNING configuration.
-void initRUNNING() {
+// setting running configuration.
+void initRunning() {
     if (nrOfSatellitesConected > 0) {
         delay(500);
     	isRunning = true;
     
-        RUNNINGInitiated = millis();
+        runningInitiated = millis();
     	pingSatelliteCount = 0;
     	satellitePinged = 0;
         pingSequenceCount = 0;
@@ -214,7 +214,7 @@ void initRUNNING() {
         }
         
         syncSamples();
-        Serial.println("RUNNING initiated");
+        Serial.println("Running initiated");
     }
     else {
         delay(500);
@@ -233,10 +233,10 @@ void syncSamples() {
 }
 
 void printSamples() {
-    unsigned long int timeFromRUNNINGInitiated = (millis() - RUNNINGInitiated) < 0 ? 0 : (millis() - RUNNINGInitiated);
+    unsigned long int timeFromRunningInitiated = (millis() - runningInitiated) < 0 ? 0 : (millis() - runningInitiated);
 
     // after 1 second we start to print samples from queue
-    if (timeFromRUNNINGInitiated > 50) {
+    if (timeFromRunningInitiated > 50) {
 
         // calculate timewindow
         unsigned long int timeWindowStart = 50 + samplePrintCount * TIME_BETWEEN_SAMPLES;
@@ -246,7 +246,7 @@ void printSamples() {
             samplesToPrint[i].valid = false;
         
         // if time to print sample
-        if(timeFromRUNNINGInitiated > timeWindowStart) {
+        if(timeFromRunningInitiated > timeWindowStart) {
             // check if there are samples to print
             if (samples[0].isEmpty() == false) {
                 for(int satellite = 0; satellite < nrOfSatellitesConected; satellite++) {
