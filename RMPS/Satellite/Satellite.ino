@@ -26,13 +26,9 @@ void prepareDataForBase();
 
 void setup() {
 	adcSetup();
-	Serial.begin(250000);
-	Serial.println("Hello!");
 	pinMode(2, OUTPUT);
 	rf::phy_init((uint8_t)GROUP); // Initializing the RF module
 	delay(100); // Power up time (worst case from datasheet)
-	Serial.print("My RID is: ");
-	Serial.println(RID);
 
 	while (myVID == -1) // TODO Implement timeout
 		myVID = registerToBase(); // Waiting for the base to acknowledge us, granting a VID
@@ -78,8 +74,6 @@ int registerToBase() {
 			struct rf::ConnectedConfirmation *confirmation;
 			confirmation = (rf::ConnectedConfirmation*)data;
 			newVID = (confirmation->VID);
-			Serial.print("My VID is: ");
-			Serial.println(newVID);
 		}
 	}
 
