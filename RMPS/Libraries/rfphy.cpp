@@ -298,7 +298,7 @@ namespace rf {
 	}
 	
 	bool phy_sendWait(const uint8_t buffer[], uint8_t len) {
-		if(phy_send(buffer, len) == false)
+		if (phy_send(buffer, len) == false)
 			return false;
 			
 		while (phy_state != STATE_IDLE);

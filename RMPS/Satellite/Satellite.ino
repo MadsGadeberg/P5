@@ -62,7 +62,7 @@ int registerToBase() {
 	rf::pr_send_connectRequest((uint16_t)RID);
 	connectRequestSent = millis();
 
-	while (millis() < connectRequestSent + 50 && myVID == -1){ // Letting the base process connectRequest, and waiting a bit for the confirmation
+	while (millis() < connectRequestSent + 50 && myVID == -1) { // Letting the base process connectRequest, and waiting a bit for the confirmation
 		rf::packetTypes type = rf::pr_receive(data);
 		if (type == rf::CONNECTED_CONFIRMATION) {
 			struct rf::ConnectedConfirmation *confirmation;
