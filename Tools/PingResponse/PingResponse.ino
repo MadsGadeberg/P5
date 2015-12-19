@@ -2,8 +2,8 @@
 #include "Arduino.h"
 
 // Size of packages - needs to match with sender
-#define SEND_PACKET 85
-#define RECEIVE_PACKET 10
+#define SEND_PACKET 81
+#define RECEIVE_PACKET 5
 
 uint8_t arraySend[SEND_PACKET];
 

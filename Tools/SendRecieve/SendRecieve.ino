@@ -2,8 +2,8 @@
 #include "Arduino.h"
 
 // Size of packages - needs to match with sender
-#define SEND_PACKET 10
-#define RECEIVE_PACKET 85
+#define SEND_PACKET 5
+#define RECEIVE_PACKET 81
 
 // Timeout of packet to be received
 #define RECEIVE_TIMEOUT 200
