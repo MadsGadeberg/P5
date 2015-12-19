@@ -26,7 +26,8 @@ QueueArray<Sample> samples[MAX_CONNECTED_SATELLITES];
 
 
 // Registrers if base is running and collecting data from satelites. If it's not running it would try to connect to sattelites
-bool isRunning = false;
+typedef enum SystemStates { LISTENINGFORSATELLITES, RUNNING } SystemStates;
+SystemStates systemState = LISTENINGFORSATELLITES;
 
 // Run mode data
 unsigned long int runningInitiated = 0;  // the time running was initiated - used to calculate ping times
@@ -57,12 +58,15 @@ void setup() {
 	pinMode(PIN_LISTENBTN, INPUT);
 }
 
-void loop(){
-	if (!isRunning)
+void loop() {
+	switch (systemState) {
+	case LISTENINGFORSATELLITES:
 		registerSatellite();
-	else {
+		break;
+	case RUNNING:
 		getDataFromSatellites();
 	    printSamples();
+		break;
 	}
 
 	checkForStateChange();
@@ -182,7 +186,7 @@ void checkForStateChange() {
 // setting Listening for sats configuration
 void initLISTENINGFORSATELITESMode() {
     delay(500);
-    isRunning = false;
+    systemState = LISTENINGFORSATELLITES;
 
     // clear all connected satellites
     for (int i = 0; i < MAX_CONNECTED_SATELLITES; i++)
@@ -197,7 +201,7 @@ void initLISTENINGFORSATELITESMode() {
 void initRunning() {
     if (nrOfSatellitesConected > 0) {
         delay(500);
-    	isRunning = true;
+    	systemState = RUNNING;
     
         runningInitiated = millis();
     	pingSatelliteCount = 0;
