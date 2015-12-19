@@ -70,6 +70,7 @@ int registerToBase() {
 			newVID = (confirmation->VID);
 		}
 	}
+ 
 	return newVID;
 }
 
