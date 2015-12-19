@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include <QueueArray.h>
 #include <rfapp.h>
-#include <rfhw.h>
+#include <rfphy.h>
 #include <rfpr.h>
 
 // Using the namespace rf which is used in protocol and physical layer

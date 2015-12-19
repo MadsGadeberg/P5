@@ -1,4 +1,4 @@
-#include <rfhw.h>
+#include <rfphy.h>
 #include "Arduino.h"
 
 // Size of packages - needs to match with sender

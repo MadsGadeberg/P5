@@ -76,11 +76,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="rfapp.h" />
-    <ClInclude Include="rfhw.h" />
+    <ClInclude Include="rfphy.h" />
     <ClInclude Include="rfpr.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="rfhw.cpp" />
+    <ClCompile Include="rfphy.cpp" />
     <ClCompile Include="rfpr.cpp" />
   </ItemGroup>
   <ItemGroup>

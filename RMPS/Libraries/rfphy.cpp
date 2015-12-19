@@ -1,7 +1,7 @@
 // Inspired by RF12 - https://github.com/jcw/jeelib
 
 #include <stdint.h>
-#include "rfhw.h"
+#include "rfphy.h"
 #include <Arduino.h>
 
 // Define pins
@@ -276,12 +276,6 @@ namespace rf {
 		// Disable clock output of CLK pin: &0x1 (Clock is generated from master)
 		phy_sendCMD(0x82D9);
 	}
-	
-	/*
-	inline void phy_setStateIdle() {
-		phy_state = STATE_IDLE;
-		phy_sendCMD(0x820D);
-	}*/
 	
 	inline void phy_setStateTransmitter() {
 		phy_state = STATE_TX_BYTE1;
