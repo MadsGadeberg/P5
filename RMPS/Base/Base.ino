@@ -30,11 +30,11 @@ typedef enum SystemStates { LISTENINGFORSATELLITES, RUNNING } SystemStates;
 SystemStates systemState = LISTENINGFORSATELLITES;
 
 // Run mode data
-unsigned long int runningInitiated = 0;  // the time running was initiated - used to calculate ping times
+unsigned long int runningInitiated   = 0;   // the time running was initiated - used to calculate ping times
 unsigned long int pingSatelliteCount = 0;   // The number of satellite pings since runningInitiated
-unsigned long int pingSequenceCount = 0;
+unsigned long int pingSequenceCount  = 0;
 
-bool satellitePinged = 0;    // if the current sattelite have been pinged - ping only once!
+bool satellitePinged = 0; // if the current sattelite have been pinged - ping only once!
 
 unsigned long int samplePrintCount = 0;
 
@@ -53,10 +53,10 @@ void setup() {
 	Serial.begin(250000);
 	
 	// Initializing the RF module
-    rf::phy_init((uint8_t)GROUP);
+  rf::phy_init((uint8_t)GROUP);
     
-    // Power up time (worst case from datasheet)
-    delay(100);
+  // Power up time (worst case from datasheet)
+  delay(100);
 
 	// Set pinModes for buttons to input
 	pinMode(PIN_RUNBTN, INPUT);
@@ -70,7 +70,7 @@ void loop() {
 		break;
 	case RUNNING:
 		getDataFromSatellites();
-	    printSamples();
+	  printSamples();
 		break;
 	}
 
@@ -99,6 +99,7 @@ void registerSatellite() {
             Serial.print(satelliteConnected(satelliteRID)); 
             Serial.println(" Reconnected");           
         }
+        
         else {
         	// Save RID and return VID for the new connected satellite
             connectedSatellites[nrOfSatellitesConected] = satelliteRID;
@@ -146,7 +147,7 @@ void getDataFromSatellites() {
        
 	// If we didnt recieve data in the timeslice
 	else if (time >= timeWindowEnd)
-        logTimeout(satelliteToGetDataFrom);
+      logTimeout(satelliteToGetDataFrom);
 }
 
 // Pings satellite for data and saves it to dataSet
@@ -165,40 +166,40 @@ void getDataFromSatellite(int satellite) {
             Sample s = tmpSamples->data[i];
             queue->enqueue(s);
         }
-		incrementSatellite();
+	 incrementSatellite();
 	}
 }
 
 // pings the satellite and the timer of the ping
 void pingSatellite(uint8_t satellite) {
-	pr_send_ping(satellite);	
-	satellitePinged = true;
+	 pr_send_ping(satellite);	
+	 satellitePinged = true;
 }
 
 // when timeout occurs save invalid data in data structure and increment satt
 void logTimeout(uint8_t satellite) {
-    // save invalid dummydata to dataSet
-    for (int i = 0; i < SAMPLES_PER_PACKET; i++) {
-        Sample s;
-        s.valid = false;
-        samples[satellite].enqueue(s);
-    }
-    incrementSatellite();
+   // save invalid dummydata to dataSet
+   for (int i = 0; i < SAMPLES_PER_PACKET; i++) {
+       Sample s;
+       s.valid = false;
+       samples[satellite].enqueue(s);
+   }
+   incrementSatellite();
 }
 
 // Function that increments satellite
 void incrementSatellite() {
-	pingSatelliteCount++;
-	satellitePinged = 0;
+	 pingSatelliteCount++;
+	 satellitePinged = 0;
 }
 
 // function that checks for buttonpresses to change systemState
 void checkForStateChange() {
 	// Check if one of the buttons indicate a change has to be made
 	if (digitalRead(PIN_LISTENBTN))
-        initListeningForSatellitesMode();
-    else if (digitalRead(PIN_RUNBTN))
-		initRunning();
+     initListeningForSatellitesMode();
+  else if (digitalRead(PIN_RUNBTN))
+     initRunning();
 }
 
 // setting Listening for sats configuration
@@ -208,7 +209,7 @@ void initListeningForSatellitesMode() {
 
     // clear all connected satellites
     for (int i = 0; i < MAX_CONNECTED_SATELLITES; i++)
-        connectedSatellites[i] = -1;
+       connectedSatellites[i] = -1;
     nrOfSatellitesConected = 0;
         
     Serial.println("________________________________________________");
@@ -217,38 +218,38 @@ void initListeningForSatellitesMode() {
 
 // setting running configuration.
 void initRunning() {
-    if (nrOfSatellitesConected > 0) {
-        delay(500);
-    	systemState = RUNNING;
-    
-        runningInitiated = millis();
-    	pingSatelliteCount = 0;
-    	satellitePinged = 0;
-        pingSequenceCount = 0;
-        samplePrintCount = 0;
+   if (nrOfSatellitesConected > 0) {
+      delay(500);
+   	 systemState = RUNNING;
+   
+      runningInitiated = millis();
+   	 pingSatelliteCount = 0;
+   	 satellitePinged = 0;
+      pingSequenceCount = 0;
+      samplePrintCount = 0;
         
-        // clear samples queue
-        for (int i = 0; i < MAX_CONNECTED_SATELLITES; i++) {
-            while(samples[i].isEmpty() == false)
-                samples[i].pop();
-        }
+      // clear samples queue
+      for (int i = 0; i < MAX_CONNECTED_SATELLITES; i++) {
+          while (samples[i].isEmpty() == false)
+              samples[i].pop();
+      }
         
-        syncSamples();
-        Serial.println("Running initiated");
-    }
-    else {
-        delay(500);
-        Serial.println("No satellites connected!");
-    }
-        
+      syncSamples();
+      Serial.println("Running initiated");
+   }
+   
+   else {
+     delay(500);
+     Serial.println("No satellites connected!");
+   }
 }
 
 // this function is padding samples to our samplequeue to make sure that the saved samples is syncronized.
 void syncSamples() {
     for (int i = 0; i < nrOfSatellitesConected; i++) {
-        int samplesToAdd = i * SAMPLES_BETWEEN_PINGS;
-        for (int j = 0; j < samplesToAdd; j++)
-            samples[i].enqueue(Sample());    
+       int samplesToAdd = i * SAMPLES_BETWEEN_PINGS;
+       for (int j = 0; j < samplesToAdd; j++)
+           samples[i].enqueue(Sample());
     }
 }
 
@@ -257,7 +258,6 @@ void printSamples() {
 
     // after 1 second the samples are printet
     if (timeFromRunningInitiated > 50) {
-
         // calculate timewindow
         unsigned long int timeWindowStart = 50 + samplePrintCount * TIME_BETWEEN_SAMPLES;
 
@@ -274,13 +274,14 @@ void printSamples() {
                     
                     // Print sample information to serial
                     Serial.println("-----------");
-                    if (samplesToPrint[satellite].valid){
+                    if (samplesToPrint[satellite].valid) {
                         Serial.print("Sat "); 
                         Serial.print(satellite); 
                         Serial.print(": "); 
                         Serial.println(samplesToPrint[satellite].value);
                     }
-                    else{
+                    
+                    else {
                         Serial.print("Sat "); 
                         Serial.print(satellite); 
                         Serial.println(":-");
