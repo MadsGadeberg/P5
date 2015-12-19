@@ -77,7 +77,7 @@ void loop() {
 	checkForStateChange();
 }
 
-// function that listens for incomming sattelite requests.
+// Function that listens for incomming sattelite requests.
 void registerSatellite() {
 	char data[SAMPLE_PACKET_SIZE];
 
