@@ -11,16 +11,14 @@ using namespace rf;
 #define PIN_RUNBTN 3
 #define PIN_LISTENBTN 4
 
-// The maximum number of connected satellites
+// Configuration of the system
 #define MAX_CONNECTED_SATELLITES 8
-
-// Time between each ping sequence
 #define TIME_BETWEEN_PING_SEQUENCE 200
 
 // Keeps control of current number of satellites connected
 uint8_t nrOfSatellitesConected = 0;
 
-// Keeps control of all connected satellites and their RID (Real ID - unique id for each satelite)
+// All connected satellites and their RID (Real ID - unique id for each satelite)
 uint16_t connectedSatellites[MAX_CONNECTED_SATELLITES];
 
 // Data from connected satellites
@@ -49,7 +47,7 @@ void incrementSatellite();
 void checkForStateChange();
 void initRunning();
 
-void setup(){
+void setup() {
 	Serial.begin(250000);
     rf::phy_init((uint8_t)GROUP); // Initializing the RF module	
     delay(100); // Power up time (worst case from datasheet)
