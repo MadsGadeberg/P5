@@ -1,7 +1,7 @@
 // Inspired by RF12 - https://github.com/jcw/jeelib
 
 #include <stdint.h>
-#include "rfhw.h"
+#include "rfphy.h"
 #include <Arduino.h>
 
 // Define pins

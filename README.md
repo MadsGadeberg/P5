@@ -8,8 +8,8 @@ This is the soucecode for the Rowing Performance Monitoring System (RPMS). This 
   - Contains the protocol and physical layer and also a header file for general definitions in the entire sourcecode
   - rfpr.h
   - rfpr.cpp
-  - rfhw.h
-  - rfhw.cpp
+  - rfphy.h
+  - rfphy.cpp
   - rfapp.h
 * Tools.zip
   - Contains some of the tests used in developing of the program

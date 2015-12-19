@@ -21,7 +21,7 @@
     <ClInclude Include="rfapp.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="rfhw.h">
+    <ClInclude Include="rfphy.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="rfpr.h">
@@ -29,7 +29,7 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="rfhw.cpp">
+    <ClCompile Include="rfphy.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="rfpr.cpp">

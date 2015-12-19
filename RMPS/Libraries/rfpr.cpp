@@ -1,5 +1,5 @@
 #include "rfpr.h"
-#include "rfhw.h"
+#include "rfphy.h"
 #include "rfapp.h"
 #include <stdint.h>
 #include <string.h>
