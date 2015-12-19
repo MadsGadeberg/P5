@@ -175,7 +175,7 @@ namespace rf {
 			return NODATA;
 		
 		// Packettype 1 is connectRequest
-		if (data[0] >> 4 == 1){
+		if (data[0] >> 4 == 1) {
 			struct ConnectRequest request;
 			
 			// Read RID with is in index 1 and 2 (uint16_t)
@@ -197,13 +197,13 @@ namespace rf {
 			}
 			
 			// Check if checksum matches
-			if ((crc & 0xf) == (data[0] & 0xf)){
+			if ((crc & 0xf) == (data[0] & 0xf)) {
 				// Update output
 				memcpy(output, &request, sizeof(ConnectRequest));
 			
 				return CONNECT_REQUEST;
 			}
-		} else if(data[0] >> 4 == 2){
+		} else if (data[0] >> 4 == 2) {
 			struct ConnectedConfirmation confirmation;
 			
 			// Read VID
@@ -220,13 +220,13 @@ namespace rf {
 			}
 			
 			// Check if checksum matches
-			if(crc == data[3]){
+			if (crc == data[3]) {
 				// Update output
 				memcpy(output, &confirmation, sizeof(ConnectedConfirmation));
 			
 				return CONNECTED_CONFIRMATION;
 			}
-		} else if(data[0] >> 4 == 3){
+		} else if (data[0] >> 4 == 3) {
 			struct Ping ping;
 			
 			// Read VID
@@ -235,13 +235,13 @@ namespace rf {
 			uint8_t crc = 0;
 			crc = crc8_update(data[0], crc);
 			
-			if(crc == data[1]){
+			if (crc == data[1]) {
 				// Update output
 				memcpy(output, &ping, sizeof(Ping));
 			
 				return PING;
 			}
-		} else if(data[0] >> 4 == 4 || data[0] & 0xf == 4){ // This else needs to be at last so it does not detect other package types
+		} else if (data[0] >> 4 == 4 || data[0] & 0xf == 4) { // This else needs to be at last so it does not detect other package types
 			struct SamplePacketVerified samplePacketVerified;
 			
 			uint8_t* array = data + 1;
