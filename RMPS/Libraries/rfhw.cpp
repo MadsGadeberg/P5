@@ -277,12 +277,6 @@ namespace rf {
 		phy_sendCMD(0x82D9);
 	}
 	
-	/*
-	inline void phy_setStateIdle() {
-		phy_state = STATE_IDLE;
-		phy_sendCMD(0x820D);
-	}*/
-	
 	inline void phy_setStateTransmitter() {
 		phy_state = STATE_TX_BYTE1;
 		
