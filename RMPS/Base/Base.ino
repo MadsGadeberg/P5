@@ -1,37 +1,43 @@
-#include <MemoryFree.h>
-
 #include <Arduino.h>
 #include <QueueArray.h>
 #include <rfapp.h>
 #include <rfhw.h>
 #include <rfpr.h>
 
+// Using the namespace rf which is used in protocol and physical layer
 using namespace rf;
 
-#define BTNRUN_PIN 3
-#define BTNLISTEN_PIN 4
+// Defines of pins
+#define PIN_RUNBTN 3
+#define PIN_LISTENBTN 4
 
+// The maximum number of connected satellites
 #define MAX_CONNECTED_SATELLITES 8
+
+// Time between each ping sequence
 #define TIME_BETWEEN_PING_SEQUENCE 200
 
-typedef enum SystemStates { LISTENINGFORSATELITES, RUNNING, STANDBY } SystemStates;
+// Keeps control of current number of satellites connected
+uint8_t nrOfSatellitesConected = 0;
 
-// the state of the base
-SystemStates systemState = LISTENINGFORSATELITES;
+// Keeps control of all connected satellites and their RID (Real ID - unique id for each satelite)
+uint16_t connectedSatellites[MAX_CONNECTED_SATELLITES];
 
-// Listening for satellites data
-int nrOfSatellitesConected = 0; // This value also shows the next VID to assign to a satellite
-uint16_t connectedSatellites[MAX_CONNECTED_SATELLITES]; // the array that holds the RID of the connected satellites
+// Data from connected satellites
+QueueArray<Sample> samples[MAX_CONNECTED_SATELLITES];
+
+
+// Registrers if base is running and collecting data from satelites. If it's not running it would try to connect to sattelites
+bool isRunning = false;
 
 // Run mode data
 unsigned long int RUNNINGInitiated = 0;  // the time RUNNING was initiated - used to calculate ping times
 unsigned long int pingSatelliteCount = 0;   // The number of satellite pings since RUNNINGInitiated
-bool satellitePinged = 0;    // if the current sattelite have ben pinged - ping only once!
 unsigned long int pingSequenceCount = 0;
 
-unsigned long int samplePrintCount = 0;
+bool satellitePinged = 0;    // if the current sattelite have been pinged - ping only once!
 
-QueueArray<Sample> samples[MAX_CONNECTED_SATELLITES];
+unsigned long int samplePrintCount = 0;
 
 // Prototypes
 void registerSatellite();
@@ -49,14 +55,14 @@ void setup(){
     delay(100); // Power up time (worst case from datasheet)
 	Serial.println("Init done");
 
-	pinMode(BTNRUN_PIN, INPUT);
-	pinMode(BTNLISTEN_PIN, INPUT);
+	pinMode(PIN_RUNBTN, INPUT);
+	pinMode(PIN_LISTENBTN, INPUT);
 }
 
 void loop(){
-	if (systemState == LISTENINGFORSATELITES)
+	if (!isRunning)
 		registerSatellite();
-	else if (systemState == RUNNING) {
+	else {
 		getDataFromSatellites();
 	    printSamples();
 	}
@@ -169,16 +175,16 @@ void incrementSatellite() {
 
 // function that checks for buttonpresses to change systemState
 void checkForStateChange() {
-	if (digitalRead(BTNLISTEN_PIN))      // Listen for satellites
+	if (digitalRead(PIN_LISTENBTN))      // Listen for satellites
         initLISTENINGFORSATELITESMode();
-	else if (digitalRead(BTNRUN_PIN))  // Run button
+	else if (digitalRead(PIN_RUNBTN))  // Run button
 		initRUNNING();
 }
 
 // setting Listening for sats configuration
 void initLISTENINGFORSATELITESMode() {
     delay(500);
-    systemState = LISTENINGFORSATELITES;
+    isRunning = false;
 
     // clear all connected satellites
     for (int i = 0; i < MAX_CONNECTED_SATELLITES; i++)
@@ -193,7 +199,7 @@ void initLISTENINGFORSATELITESMode() {
 void initRUNNING() {
     if (nrOfSatellitesConected > 0) {
         delay(500);
-    	systemState = RUNNING;
+    	isRunning = true;
     
         RUNNINGInitiated = millis();
     	pingSatelliteCount = 0;
