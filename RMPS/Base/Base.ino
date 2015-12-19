@@ -135,10 +135,8 @@ void getDataFromSatellite(int satellite){
 	char data[SAMPLE_PACKET_VERIFIED_SIZE];
 
 	if (pr_receive(data) == DATA) {
-        //Serial.println("                             recieve: ");
         SamplePacketVerified* tmpSamples = (SamplePacketVerified*) data;
         for(int i = 0; i< SAMPLES_PER_PACKET; i++){
-            //Serial.print(i); Serial.print(" mem:"); Serial.println(freeMemory());
             QueueArray<Sample> *queue = &samples[satellite];
             Sample s = tmpSamples->data[i];
             queue->enqueue(s);
@@ -161,13 +159,6 @@ void logTimeout(int satellite){
 // pings the satellite and the timer of the ping
 void pingSatellite(int satellite){
 	pr_send_ping((char)satellite);	
-    //Serial.println("                             pinged: ");
-    //pingSent = millis();
-    //Serial.println("____________________");
-    //Serial.print("Sat ");
-    //Serial.print(satellite);
-    //Serial.print(" Ping at :");
-    //Serial.println(millis());
 	satellitePinged = 1;
 }
 
@@ -175,21 +166,6 @@ void pingSatellite(int satellite){
 void incrementSatellite(){
 	pingSatelliteCount++;
 	satellitePinged = 0;
-
-    //Serial.println("_____________________________");
-    //Serial.print("Sat incremented to: ");
-    //Serial.print(pingSatelliteCount);
-    //Serial.print(" at ");
-    //Serial.println(millis());
-
-
-
-    //Serial.print("S: ");
-    //Serial.print(timeWindowStart);
-    //Serial.print(" T: ");
-    //Serial.print(millis());
-    //Serial.print(" E: ");
-    //Serial.println(timeWindowEnd);
 }
 
 // function that checks for buttonpresses to change systemState
