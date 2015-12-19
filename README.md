@@ -27,8 +27,9 @@ To compile the program there are a number of steps needed to be performed:
 
 1. Install Arduino IDE (Arduino IDE can be downloaded at https://www.arduino.cc/en/Main/Software)
 2. Install library by opening Arduino IDE and select menu Sketch -> Include library -> Add .ZIP Library and then select the Libraries.zip zip file
-3. Open either Base.ino or Satelite.ino
-4. Compile the program by clicking on the verify button
+3. Download the library QueueArray from http://playground.arduino.cc/Code/QueueArray and add library (same procedure as step 2)
+4. Open either Base.ino or Satelite.ino
+5. Compile the program by clicking on the verify button
 
 ## Uploading Base.ino to Arduino UNO
 It's possible to upload the Base.ino to a Arduino UNO by clicking upload in the Arduino IDE. The board needs to be connected as follows:
